@@ -23,6 +23,9 @@ e este projeto adere ao [Versionamento Semântico](docs/VERSIONING.md).
 - Driver Certisign: `RemoteIdProvider`, `RemoteIdProviderBuilder`, `RemoteIdOAuth2Support`
 - Driver Valid: `VidaasProvider`, `VidaasProviderBuilder`, `VidaasOAuth2Support`, fluxo push
 - Driver Safeweb: `SafeIdProvider`, `SafeIdProviderBuilder`, `SafeIdOAuth2Support`
+- Módulo validator ACT: `Rfc3161TimestampAuthority`, `CmsTimestampEnhancer`, integração PAdES-T no `CloudSigner`
+- Módulo validator revogação: `CrlRevocationChecker`, `OcspRevocationChecker`, `CertificateRevocationValidator`, cache CRL/OCSP
+- Módulo validator conformidade: `DocIcp15PolicyValidator`, `PadesSignatureVerifier`, `CmsLtvEnhancer`, `docs/ITI_VALIDATOR_COMPATIBILITY.md`
 - Testes unitários providers (Bird ID + Remote ID + infra HTTP/OAuth)
 - Documentação de segurança: `docs/SECURITY.md`
 - Documentação técnica V12, controle de desenvolvimento e governança open source

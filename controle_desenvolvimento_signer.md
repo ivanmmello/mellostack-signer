@@ -154,24 +154,24 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 3.1 Carimbo do Tempo (ACT)
 
-- [ ] Implementar cliente para Autoridade de Carimbo do Tempo credenciada
-- [ ] Implementar solicitação de timestamp sobre o hash da assinatura
-- [ ] Injetar selo temporal no pacote CMS (PAdES-T)
-- [ ] Suportar ACT configurável por tenant/aplicação
+- [x] Implementar cliente para Autoridade de Carimbo do Tempo credenciada — `Rfc3161TimestampAuthority` + `ActClientConfig`
+- [x] Implementar solicitação de timestamp sobre o hash da assinatura — `TimestampAuthority.requestTimestampToken()`
+- [x] Injetar selo temporal no pacote CMS (PAdES-T) — `CmsTimestampEnhancer`
+- [x] Suportar ACT configurável por tenant/aplicação — `CloudSigner(PSCProvider, TimestampAuthority)`
 
 ### 3.2 Validação de Revogação
 
-- [ ] Implementar consulta CRL (Certificate Revocation List)
-- [ ] Implementar consulta OCSP (Online Certificate Status Protocol)
-- [ ] Implementar cache de respostas CRL/OCSP com TTL configurável
-- [ ] Tratar certificados revogados ou indeterminados
+- [x] Implementar consulta CRL (Certificate Revocation List) — `CrlRevocationChecker`
+- [x] Implementar consulta OCSP (Online Certificate Status Protocol) — `OcspRevocationChecker`
+- [x] Implementar cache de respostas CRL/OCSP com TTL configurável — `RevocationResponseCache`
+- [x] Tratar certificados revogados ou indeterminados — `CertificateRevocationValidator`, `RevocationException`
 
 ### 3.3 Conformidade DOC-ICP e LTV
 
-- [ ] Implementar validação de políticas DOC-ICP-15 (algoritmos SHA-2, RSA ≥ 2048 bits)
-- [ ] Implementar inclusão de dados para validação de longo prazo (LTV)
-- [ ] Implementar verificador local de assinatura PAdES (pré-validação antes de entrega)
-- [ ] Documentar compatibilidade com validadores ITI (Verificador de Conformidade)
+- [x] Implementar validação de políticas DOC-ICP-15 (algoritmos SHA-2, RSA ≥ 2048 bits) — `DocIcp15PolicyValidator`
+- [x] Implementar inclusão de dados para validação de longo prazo (LTV) — `CmsLtvEnhancer`, `LtvRevocationDataCollector`
+- [x] Implementar verificador local de assinatura PAdES (pré-validação antes de entrega) — `PadesSignatureVerifier`
+- [x] Documentar compatibilidade com validadores ITI (Verificador de Conformidade) — `docs/ITI_VALIDATOR_COMPATIBILITY.md`
 
 ---
 
@@ -312,7 +312,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-30 | Fase 1.2 concluída: DocumentDigestCalculator, HashPayload, EncodingUtils — privacidade PSC (somente hash), Base64/Hex — 23 testes no core |
 | 2026-07-30 | Fase 1.3 concluída: CmsEnvelopeAssembler, CmsAssemblyRequest, signingCertificateV2 e atributos PAdES — CMS detached injectável no PDF — 27 testes no core |
 | 2026-07-30 | Fase 1.4 concluída: CloudSigner.signPdf() orquestra prepare → PSC → CMS → inject; PSCProvider.getSignerCertificate() — 30 testes totais |
-| 2026-07-30 | Fase 2.1/2.2 (parcial): SecureHttpClient, OAuth2 PKCE, BirdIdProvider, BirdIdOAuth2Support — 52 testes totais — docs/SECURITY.md |
+| 2026-07-30 | Fase 3 concluída (3.1 ACT + 3.2 CRL/OCSP + 3.3 DOC-ICP/LTV): validator completo — 115 testes totais |
 
 ---
 

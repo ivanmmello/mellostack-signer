@@ -1,6 +1,5 @@
 package org.icpbrasil.signer.core;
 
-import org.bouncycastle.cms.CMSException;
 import org.icpbrasil.signer.core.cms.CmsAssemblyRequest;
 import org.icpbrasil.signer.core.cms.CmsEnvelopeAssembler;
 import org.icpbrasil.signer.core.pdf.PadesPrepareOptions;
@@ -9,7 +8,10 @@ import org.icpbrasil.signer.core.pdf.PadesSignaturePreparer;
 import org.icpbrasil.signer.core.pdf.PreparedSignature;
 import org.icpbrasil.signer.model.SignatureOptions;
 import org.icpbrasil.signer.provider.PSCProvider;
+import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.icpbrasil.signer.validator.act.TimestampAuthority;
+import org.icpbrasil.signer.validator.cms.CmsTimestampEnhancer;
 
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
@@ -24,12 +26,25 @@ public final class CloudSigner {
     private final PSCProvider provider;
     private final PadesSignaturePreparer preparer;
     private final PadesSignatureInjector injector;
+    private final TimestampAuthority timestampAuthority;
 
     public CloudSigner(PSCProvider provider) {
-        this(provider, new PadesSignaturePreparer(), new PadesSignatureInjector());
+        this(provider, null);
     }
 
-    CloudSigner(PSCProvider provider, PadesSignaturePreparer preparer, PadesSignatureInjector injector) {
+    /**
+     * @param timestampAuthority ACT configurável pela aplicação host (por tenant/ambiente).
+     *                           Obrigatória quando {@link SignatureOptions#isTimestamp()} for {@code true}.
+     */
+    public CloudSigner(PSCProvider provider, TimestampAuthority timestampAuthority) {
+        this(provider, timestampAuthority, new PadesSignaturePreparer(), new PadesSignatureInjector());
+    }
+
+    CloudSigner(
+            PSCProvider provider,
+            TimestampAuthority timestampAuthority,
+            PadesSignaturePreparer preparer,
+            PadesSignatureInjector injector) {
         if (provider == null) {
             throw new IllegalArgumentException("PSCProvider must not be null");
         }
@@ -40,6 +55,7 @@ public final class CloudSigner {
             throw new IllegalArgumentException("injector must not be null");
         }
         this.provider = provider;
+        this.timestampAuthority = timestampAuthority;
         this.preparer = preparer;
         this.injector = injector;
     }
@@ -61,8 +77,9 @@ public final class CloudSigner {
         if (options.getUserAccessToken() == null || options.getUserAccessToken().isBlank()) {
             throw new IllegalArgumentException("userAccessToken must not be empty");
         }
-        if (options.isTimestamp()) {
-            throw new UnsupportedOperationException("Carimbo do tempo (ACT) ainda não implementado — Fase 3");
+        if (options.isTimestamp() && timestampAuthority == null) {
+            throw new IllegalStateException(
+                    "TimestampAuthority must be configured on CloudSigner when withTimestamp(true)");
         }
 
         try {
@@ -89,15 +106,24 @@ public final class CloudSigner {
                     .signingTime(new Date())
                     .build());
 
+            if (options.isTimestamp()) {
+                cms = CmsTimestampEnhancer.enhance(cms, timestampAuthority);
+            }
+
             return injector.inject(prepared, cms);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to prepare or inject PDF signature", e);
-        } catch (CMSException | CertificateEncodingException | OperatorCreationException e) {
+        } catch (CMSException | CertificateEncodingException | OperatorCreationException
+                 | org.bouncycastle.tsp.TSPException e) {
             throw new IllegalStateException("Failed to assemble CMS envelope", e);
         }
     }
 
     public PSCProvider getProvider() {
         return provider;
+    }
+
+    public TimestampAuthority getTimestampAuthority() {
+        return timestampAuthority;
     }
 }
