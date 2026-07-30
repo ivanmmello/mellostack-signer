@@ -1,0 +1,60 @@
+# Compiled output
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.factorypath
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+
+# Node (apps demo — Fase 4.4)
+node_modules/
+dist/
+.npm/
+
+# Test / coverage
+.jacoco/
+coverage/
+
+# GraalVM native (Fase 5.2)
+**/native-image/
