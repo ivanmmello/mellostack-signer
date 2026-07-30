@@ -41,14 +41,32 @@ class CloudSignerTest {
     }
 
     @Test
-    void rejectsTimestampUntilPhase3() {
+    void rejectsTimestampWithoutAuthority() {
         var options = SignatureOptions.builder()
                 .withUserAccessToken("token")
                 .withTimestamp(true)
                 .build();
 
         var signer = new CloudSigner(testProvider());
-        assertThrows(UnsupportedOperationException.class, () -> signer.signPdf(samplePdf, options));
+        assertThrows(IllegalStateException.class, () -> signer.signPdf(samplePdf, options));
+    }
+
+    @Test
+    void signsPdfWithTimestampWhenAuthorityConfigured() throws Exception {
+        var options = SignatureOptions.builder()
+                .withUserAccessToken("token")
+                .withTimestamp(true)
+                .build();
+
+        var signer = new CloudSigner(
+                testProvider(),
+                org.icpbrasil.signer.validator.act.LocalTimestampAuthority.generate()
+        );
+
+        byte[] signedPdf = signer.signPdf(samplePdf, options);
+
+        assertNotNull(signedPdf);
+        assertTrue(PdfIntegrityValidator.isReadablePdf(signedPdf));
     }
 
     @Test
