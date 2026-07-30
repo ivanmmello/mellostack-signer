@@ -42,5 +42,5 @@ e este projeto adere ao [Versionamento Semântico](docs/VERSIONING.md).
 
 Versão de desenvolvimento inicial (Fase 0). API ainda não funcional para assinatura PAdES em produção.
 
-[Unreleased]: https://github.com/mellostack/mellostack-signer/compare/v1.0.0-SNAPSHOT...HEAD
-[1.0.0-SNAPSHOT]: https://github.com/mellostack/mellostack-signer/releases/tag/v1.0.0-SNAPSHOT
+[Unreleased]: https://github.com/ivanmmello/mellostack-signer/compare/v1.0.0-SNAPSHOT...HEAD
+[1.0.0-SNAPSHOT]: https://github.com/ivanmmello/mellostack-signer/releases/tag/v1.0.0-SNAPSHOT

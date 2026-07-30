@@ -52,7 +52,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 0.3 Infraestrutura e DevOps
 
-- [!] Criar repositório GitHub organizacional (`mellostack-signer`) — ver [docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md) (ação manual)
+- [x] Criar repositório GitHub (`ivanmmello/mellostack-signer`) — https://github.com/ivanmmello/mellostack-signer
 - [x] Configurar branches (`main` + `develop` + `feature/*`) — documentado em `docs/GITHUB_SETUP.md`
 - [x] Configurar esteira CI/CD (GitHub Actions: build, testes, análise estática) — `.github/workflows/ci.yml`
 - [x] Configurar workflow de release (`.github/workflows/release.yml`) + publicação Maven Central — `docs/MAVEN_CENTRAL.md`, perfil `-Prelease` no pom
@@ -307,6 +307,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-30 | Fase 0.1 concluída: monorepo Maven `mellostack-signer` (core, providers, validator, sdk), Java 17, dependências base, LICENSE, README, .gitignore, apps/, classes skeleton, `mvn verify` OK (3 testes) |
 | 2026-07-30 | Fase 0.2 concluída: CONTRIBUTING.md, CODE_OF_CONDUCT.md, CHANGELOG.md, docs/VERSIONING.md (SemVer), docs/PSC_PROVIDERS.md, Javadoc PSCProvider |
 | 2026-07-30 | Fase 0.3 concluída: GitHub Actions (CI + Release), Dependabot, perfil Maven `-Prelease` (GPG + Central Portal), JaCoCo/Enforcer/SpotBugs, badges README, docs/GITHUB_SETUP.md e MAVEN_CENTRAL.md |
+| 2026-07-30 | Repositório GitHub criado e push inicial: `ivanmmello/mellostack-signer` (branches `main` + `develop`) |
 
 ---
 

@@ -1,6 +1,6 @@
 # MelloStack Signer
 
-[![CI](https://github.com/mellostack/mellostack-signer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mellostack/mellostack-signer/actions/workflows/ci.yml)
+[![CI](https://github.com/ivanmmello/mellostack-signer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ivanmmello/mellostack-signer/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://openjdk.org/)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mellostack.signer/mellostack-signer-sdk?label=Maven%20Central)](https://central.sonatype.com/artifact/com.mellostack.signer/mellostack-signer-sdk)
