@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test (Java 17)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Verify (build, tests, enforcer, JaCoCo)
+        run: mvn -B -Pci clean verify -Dspotbugs.skip=true
+
+      - name: SpotBugs (static analysis)
+        run: mvn -B spotbugs:check -Dspotbugs.skip=false
+        continue-on-error: true
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: "**/target/site/jacoco/"
+          if-no-files-found: ignore
