@@ -1,7 +1,20 @@
 package org.icpbrasil.signer.core;
 
+import org.bouncycastle.cms.CMSException;
+import org.icpbrasil.signer.core.cms.CmsAssemblyRequest;
+import org.icpbrasil.signer.core.cms.CmsEnvelopeAssembler;
+import org.icpbrasil.signer.core.pdf.PadesPrepareOptions;
+import org.icpbrasil.signer.core.pdf.PadesSignatureInjector;
+import org.icpbrasil.signer.core.pdf.PadesSignaturePreparer;
+import org.icpbrasil.signer.core.pdf.PreparedSignature;
 import org.icpbrasil.signer.model.SignatureOptions;
 import org.icpbrasil.signer.provider.PSCProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.Date;
 
 /**
  * Fachada principal para assinatura digital qualificada em nuvem (PAdES / Cadeia V12).
@@ -9,12 +22,26 @@ import org.icpbrasil.signer.provider.PSCProvider;
 public final class CloudSigner {
 
     private final PSCProvider provider;
+    private final PadesSignaturePreparer preparer;
+    private final PadesSignatureInjector injector;
 
     public CloudSigner(PSCProvider provider) {
+        this(provider, new PadesSignaturePreparer(), new PadesSignatureInjector());
+    }
+
+    CloudSigner(PSCProvider provider, PadesSignaturePreparer preparer, PadesSignatureInjector injector) {
         if (provider == null) {
             throw new IllegalArgumentException("PSCProvider must not be null");
         }
+        if (preparer == null) {
+            throw new IllegalArgumentException("preparer must not be null");
+        }
+        if (injector == null) {
+            throw new IllegalArgumentException("injector must not be null");
+        }
         this.provider = provider;
+        this.preparer = preparer;
+        this.injector = injector;
     }
 
     /**
@@ -31,7 +58,43 @@ public final class CloudSigner {
         if (options == null) {
             throw new IllegalArgumentException("SignatureOptions must not be null");
         }
-        throw new UnsupportedOperationException("Assinatura PAdES ainda não implementada — Fase 1");
+        if (options.getUserAccessToken() == null || options.getUserAccessToken().isBlank()) {
+            throw new IllegalArgumentException("userAccessToken must not be empty");
+        }
+        if (options.isTimestamp()) {
+            throw new UnsupportedOperationException("Carimbo do tempo (ACT) ainda não implementado — Fase 3");
+        }
+
+        try {
+            PadesPrepareOptions prepareOptions = PadesPrepareOptions.from(options);
+            PreparedSignature prepared = preparer.prepare(pdfBytes, prepareOptions);
+
+            String accessToken = options.getUserAccessToken();
+            byte[] rawSignature = provider.signHash(prepared.getDocumentHash(), accessToken);
+            if (rawSignature == null || rawSignature.length == 0) {
+                throw new IllegalStateException("PSC returned an empty signature");
+            }
+
+            X509Certificate signerCertificate = provider.getSignerCertificate(accessToken);
+            if (signerCertificate == null) {
+                throw new IllegalStateException("PSC did not return a signer certificate");
+            }
+
+            byte[] cms = CmsEnvelopeAssembler.assembleDetached(CmsAssemblyRequest.builder()
+                    .rawSignature(rawSignature)
+                    .signerCertificate(signerCertificate)
+                    .certificateChain(provider.getCertificateChain(accessToken))
+                    .messageDigest(prepared.getDocumentHash())
+                    .digestAlgorithm(prepared.getDigestAlgorithm())
+                    .signingTime(new Date())
+                    .build());
+
+            return injector.inject(prepared, cms);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to prepare or inject PDF signature", e);
+        } catch (CMSException | CertificateEncodingException | OperatorCreationException e) {
+            throw new IllegalStateException("Failed to assemble CMS envelope", e);
+        }
     }
 
     public PSCProvider getProvider() {

@@ -28,6 +28,8 @@ public interface PSCProvider {
     Environment getEnvironment();
 
     byte[] signHash(byte[] documentHash, String accessToken);
+
+    X509Certificate getSignerCertificate(String accessToken);
 }
 ```
 
@@ -36,6 +38,8 @@ public interface PSCProvider {
 | `getProviderId()` | Identificador estável do driver (ex.: `birdid`, `remoteid`, `vidaas`, `safeid`) |
 | `getEnvironment()` | `HOMOLOGATION` ou `PRODUCTION` — endpoints e credenciais corretos |
 | `signHash()` | Envia **apenas o hash** ao PSC com token OAuth2 do usuário; retorna assinatura raw do HSM |
+| `getSignerCertificate()` | Retorna certificado ICP-Brasil do signatário (credencial CSC ativa) |
+| `getCertificateChain()` | Retorna intermediários V12 (opcional; default vazio) |
 
 > **Privacidade:** `signHash()` nunca recebe o PDF completo — somente o digest SHA-256/384 calculado localmente pelo módulo `core`.
 

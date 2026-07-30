@@ -2,6 +2,9 @@ package org.icpbrasil.signer.provider;
 
 import org.icpbrasil.signer.model.Environment;
 
+import java.security.cert.X509Certificate;
+import java.util.List;
+
 /**
  * Contrato para drivers plugáveis de Prestadores de Serviço de Confiança (PSC).
  * <p>
@@ -28,12 +31,28 @@ public interface PSCProvider {
     /**
      * Envia o hash do documento ao PSC para assinatura remota.
      * <p>
-     * O PDF original nunca transita por este método — apenas o digest calculado
-     * localmente sobre o {@code ByteRange} preparado pelo módulo core.
+     * <strong>Privacidade:</strong> {@code documentHash} deve ser obtido via
+     * {@link org.icpbrasil.signer.core.crypto.DocumentDigestCalculator#createPscPayload}
+     * — o PDF original ou preparado nunca deve ser transmitido ao PSC.
      *
-     * @param documentHash hash SHA-256 ou SHA-384 do ByteRange do PDF
-     * @param accessToken  token OAuth2 do usuário final (obtido pelo host)
+     * @param documentHash hash SHA-256 (32 bytes) ou SHA-384 (48 bytes) do ByteRange do PDF
+     * @param accessToken  token OAuth2 do usuário final
      * @return assinatura criptográfica raw retornada pelo HSM em nuvem
      */
     byte[] signHash(byte[] documentHash, String accessToken);
+
+    /**
+     * Certificado ICP-Brasil do signatário associado ao token OAuth2 (credencial CSC ativa).
+     * <p>
+     * Drivers devem obter este certificado via API do PSC (ex.: {@code credentials/list} no CSC)
+     * antes ou durante {@link #signHash(byte[], String)}.
+     */
+    X509Certificate getSignerCertificate(String accessToken);
+
+    /**
+     * Certificados intermediários da cadeia V12 (exclui o certificado do signatário).
+     */
+    default List<X509Certificate> getCertificateChain(String accessToken) {
+        return List.of();
+    }
 }
