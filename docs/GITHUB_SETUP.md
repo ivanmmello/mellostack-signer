@@ -10,7 +10,7 @@ Guia para publicar o **mellostack-signer** como repositório open source no GitH
 4. **Não** inicializar com README (já existe localmente).
 5. Licença: Apache 2.0 (já incluída no projeto).
 
-URL esperada: `https://github.com/mellostack/mellostack-signer`
+URL esperada: `https://github.com/ivanmmello/mellostack-signer`
 
 ## 2. Inicializar Git local (repositório dedicado)
 
@@ -52,7 +52,7 @@ Proteção recomendada (Settings → Branches → Rules):
 ## 4. Conectar remote e push
 
 ```bash
-git remote add origin git@github.com:mellostack/mellostack-signer.git
+git remote add origin git@github.com:ivanmmello/mellostack-signer.git
 git push -u origin main develop
 ```
 

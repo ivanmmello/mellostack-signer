@@ -11,12 +11,12 @@
 
     <name>MelloStack Signer</name>
     <description>ICP-Brasil Cloud Signer SDK — biblioteca Java open source para assinatura digital qualificada em nuvem (Cadeia V12)</description>
-    <url>https://github.com/mellostack/mellostack-signer</url>
+    <url>https://github.com/ivanmmello/mellostack-signer</url>
 
     <scm>
-        <connection>scm:git:git://github.com/mellostack/mellostack-signer.git</connection>
-        <developerConnection>scm:git:ssh://github.com/mellostack/mellostack-signer.git</developerConnection>
-        <url>https://github.com/mellostack/mellostack-signer</url>
+        <connection>scm:git:git://github.com/ivanmmello/mellostack-signer.git</connection>
+        <developerConnection>scm:git:ssh://github.com/ivanmmello/mellostack-signer.git</developerConnection>
+        <url>https://github.com/ivanmmello/mellostack-signer</url>
     </scm>
 
     <developers>
