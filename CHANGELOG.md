@@ -11,7 +11,13 @@ e este projeto adere ao [Versionamento Semântico](docs/VERSIONING.md).
 
 - Monorepo Maven `mellostack-signer` com módulos `core`, `providers`, `validator` e `sdk`
 - Interface `PSCProvider` para drivers plugáveis de PSC
-- Fachada `CloudSigner`, `SignatureOptions`, `SignatureResult` e `Environment` (skeleton)
+- Fachada `CloudSigner`, `SignatureOptions`, `SignatureResult` e `Environment`
+- `CloudSigner.signPdf()` — fluxo completo prepare → hash → PSC → CMS → inject
+- `PSCProvider.getSignerCertificate()` para montagem do envelope CMS
+- Módulo PDF PAdES: `PadesSignaturePreparer`, `PadesSignatureInjector`, `ByteRangeSupport`, `PdfIntegrityValidator`
+- Módulo crypto: `DocumentDigestCalculator`, `HashPayload`, `EncodingUtils` (Base64/Hex para APIs PSC)
+- Módulo CMS/PKCS#7: `CmsEnvelopeAssembler`, `CmsAssemblyRequest`, atributos PAdES (`signingCertificateV2`, `messageDigest`, etc.)
+- Testes unitários PAdES no `mellostack-signer-core` (27 testes)
 - Documentação técnica V12, controle de desenvolvimento e governança open source
 - Testes unitários iniciais em `CloudSignerTest` (validação de contrato)
 - GitHub Actions CI (build, testes, Enforcer, JaCoCo) e workflow Release

@@ -66,27 +66,27 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 1.1 Manipulação de PDF (Apache PDFBox)
 
-- [ ] Implementar preparação de contêiner de assinatura vazio (`/ByteRange`)
-- [ ] Implementar reserva de espaço para assinatura PKCS#7 no PDF
-- [ ] Implementar cálculo correto do `ByteRange` para PAdES
-- [ ] Implementar injeção da assinatura final no slot reservado
-- [ ] Suportar assinatura visível e invisível no layout PDF
-- [ ] Validar integridade do PDF após injeção da assinatura
+- [x] Implementar preparação de contêiner de assinatura vazio (`/ByteRange`)
+- [x] Implementar reserva de espaço para assinatura PKCS#7 no PDF
+- [x] Implementar cálculo correto do `ByteRange` para PAdES
+- [x] Implementar injeção da assinatura final no slot reservado
+- [~] Suportar assinatura visível e invisível no layout PDF — invisível OK; visível pendente
+- [x] Validar integridade do PDF após injeção da assinatura
 
 ### 1.2 Geração de Hash e Criptografia
 
-- [ ] Implementar geração de hash SHA-256 sobre o `ByteRange`
-- [ ] Implementar suporte a SHA-384 (conformidade V12)
-- [ ] Garantir que o documento original nunca seja transmitido ao PSC (apenas hash)
-- [ ] Implementar utilitários de codificação Base64/Hex para payloads de API
+- [x] Implementar geração de hash SHA-256 sobre o `ByteRange`
+- [x] Implementar suporte a SHA-384 (conformidade V12)
+- [x] Garantir que o documento original nunca seja transmitido ao PSC (apenas hash)
+- [x] Implementar utilitários de codificação Base64/Hex para payloads de API
 
 ### 1.3 Montagem do Envelope PKCS#7 / CMS
 
-- [ ] Implementar montagem do CMS SignedData com assinatura raw recebida do PSC
-- [ ] Incluir atributos assinados obrigatórios: `contentType`, `messageDigest`, `signingTime`
-- [ ] Incluir atributo `signingCertificateV2` (hash do certificado do signatário)
-- [ ] Incluir cadeia X.509 V12 (intermediários + raiz ICP-Brasil) no pacote CMS
-- [ ] Implementar suporte a subfiltro `adbe.pkcs7.detached` (PAdES-BES/T)
+- [x] Implementar montagem do CMS SignedData com assinatura raw recebida do PSC
+- [x] Incluir atributos assinados obrigatórios: `contentType`, `messageDigest`, `signingTime`
+- [x] Incluir atributo `signingCertificateV2` (hash do certificado do signatário)
+- [x] Incluir cadeia X.509 V12 (intermediários + raiz ICP-Brasil) no pacote CMS
+- [x] Implementar suporte a subfiltro `adbe.pkcs7.detached` (PAdES-BES/T)
 
 ### 1.4 Modelos e Fachada Pública
 
@@ -95,7 +95,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 - [x] Criar `SignatureOptions` (Builder: token OAuth2, reason, location, timestamp, visible)
 - [x] Criar `SignatureResult` (bytes assinados, metadados, certificado do signatário)
 - [x] Criar enum `Environment` (HOMOLOGATION / PRODUCTION)
-- [ ] Expor API com menos de 10 linhas para assinatura completa (Zero Boilerplate)
+- [x] Expor API com menos de 10 linhas para assinatura completa (Zero Boilerplate)
 
 ---
 
@@ -308,6 +308,10 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-30 | Fase 0.2 concluída: CONTRIBUTING.md, CODE_OF_CONDUCT.md, CHANGELOG.md, docs/VERSIONING.md (SemVer), docs/PSC_PROVIDERS.md, Javadoc PSCProvider |
 | 2026-07-30 | Fase 0.3 concluída: GitHub Actions (CI + Release), Dependabot, perfil Maven `-Prelease` (GPG + Central Portal), JaCoCo/Enforcer/SpotBugs, badges README, docs/GITHUB_SETUP.md e MAVEN_CENTRAL.md |
 | 2026-07-30 | Repositório GitHub criado e push inicial: `ivanmmello/mellostack-signer` (branches `main` + `develop`) |
+| 2026-07-30 | Fase 1.1 concluída (parcial): PadesSignaturePreparer, ByteRangeSupport, PadesSignatureInjector, PdfIntegrityValidator — 12 testes unitários no core |
+| 2026-07-30 | Fase 1.2 concluída: DocumentDigestCalculator, HashPayload, EncodingUtils — privacidade PSC (somente hash), Base64/Hex — 23 testes no core |
+| 2026-07-30 | Fase 1.3 concluída: CmsEnvelopeAssembler, CmsAssemblyRequest, signingCertificateV2 e atributos PAdES — CMS detached injectável no PDF — 27 testes no core |
+| 2026-07-30 | Fase 1.4 concluída: CloudSigner.signPdf() orquestra prepare → PSC → CMS → inject; PSCProvider.getSignerCertificate() — 30 testes totais |
 
 ---
 
