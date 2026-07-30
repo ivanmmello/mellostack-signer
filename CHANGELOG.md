@@ -18,6 +18,13 @@ e este projeto adere ao [Versionamento Semântico](docs/VERSIONING.md).
 - Módulo crypto: `DocumentDigestCalculator`, `HashPayload`, `EncodingUtils` (Base64/Hex para APIs PSC)
 - Módulo CMS/PKCS#7: `CmsEnvelopeAssembler`, `CmsAssemblyRequest`, atributos PAdES (`signingCertificateV2`, `messageDigest`, etc.)
 - Testes unitários PAdES no `mellostack-signer-core` (27 testes)
+- Módulo providers: `SecureHttpClient`, OAuth2 PKCE, `BirdIdProvider`, `BirdIdOAuth2Support`
+- Cliente ITI genérico: `ItiCloudPscApiClient`, `ItiCloudPscOAuth2Support` (compartilhado Bird ID / Remote ID)
+- Driver Certisign: `RemoteIdProvider`, `RemoteIdProviderBuilder`, `RemoteIdOAuth2Support`
+- Driver Valid: `VidaasProvider`, `VidaasProviderBuilder`, `VidaasOAuth2Support`, fluxo push
+- Driver Safeweb: `SafeIdProvider`, `SafeIdProviderBuilder`, `SafeIdOAuth2Support`
+- Testes unitários providers (Bird ID + Remote ID + infra HTTP/OAuth)
+- Documentação de segurança: `docs/SECURITY.md`
 - Documentação técnica V12, controle de desenvolvimento e governança open source
 - Testes unitários iniciais em `CloudSignerTest` (validação de contrato)
 - GitHub Actions CI (build, testes, Enforcer, JaCoCo) e workflow Release

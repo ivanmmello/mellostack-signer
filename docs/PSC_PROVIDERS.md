@@ -78,19 +78,46 @@ public interface PSCProvider {
 | `getProviderId()` | Classe (prevista) | PSC | Protocolo |
 | :--- | :--- | :--- | :--- |
 | `birdid` | `BirdIdProvider` | Soluti / Bird ID | OAuth2 + REST CSC |
-| `remoteid` | `RemoteIdProvider` | Certisign / Remote ID | OAuth2 + REST custom |
-| `vidaas` | `VidaasProvider` | Valid / VIDaaS | OpenID Connect + REST |
+| `remoteid` | `RemoteIdProvider` | Certisign / Remote ID | OAuth2 + REST ITI (`/v0/oauth/*`) |
+| `vidaas` | `VidaasProvider` | Valid / VIDaaS | OAuth2 PKCE + REST ITI (hash Base64) |
 | `safeid` | `SafeIdProvider` | Safeweb / SAFEID | OAuth2 + REST |
 
 Cada driver expõe um **Builder** para credenciais de parceiro:
 
 ```java
 PSCProvider provider = new BirdIdProviderBuilder()
-        .withClientId("SEU_CLIENT_ID")
-        .withClientSecret("SEU_CLIENT_SECRET")
+        .withClientId(System.getenv("BIRDID_CLIENT_ID"))
+        .withClientSecret(System.getenv("BIRDID_CLIENT_SECRET"))
+        .withEnvironment(Environment.HOMOLOGATION)
+        .build();
+
+BirdIdProvider birdId = (BirdIdProvider) provider;
+OAuth2PkceGenerator.PkceChallenge pkce = birdId.oauth2().generatePkceChallenge();
+String authUrl = birdId.oauth2().buildAuthorizationUrl(pkce, redirectUri, state);
+// Host redireciona usuário → OTP no app Bird ID → callback com ?code=
+
+PSCProvider remoteIdProvider = new RemoteIdProviderBuilder()
+        .withClientId(System.getenv("REMOTEID_CLIENT_ID"))
+        .withClientSecret(System.getenv("REMOTEID_CLIENT_SECRET"))
+        .withApiBaseUrl(System.getenv("REMOTEID_API_BASE_URL")) // fornecida pela Certisign
+        .withEnvironment(Environment.HOMOLOGATION)
+        .build();
+
+PSCProvider vidaasProvider = new VidaasProviderBuilder()
+        .withClientId(System.getenv("VIDAAS_CLIENT_ID"))
+        .withClientSecret(System.getenv("VIDAAS_CLIENT_SECRET"))
+        .withEnvironment(Environment.HOMOLOGATION)
+        .build();
+// VIDaaS: credenciais via POST /v0/oauth/application em hml-certificado.vidaas.com.br
+
+PSCProvider safeIdProvider = new SafeIdProviderBuilder()
+        .withClientId(System.getenv("SAFEID_CLIENT_ID"))
+        .withClientSecret(System.getenv("SAFEID_CLIENT_SECRET"))
         .withEnvironment(Environment.HOMOLOGATION)
         .build();
 ```
+
+> **Remote ID:** a Certisign não publica URLs fixas como o Bird ID. A `apiBaseUrl` é obrigatória e vem do processo de integração comercial.
 
 ## OAuth2 — responsabilidade do host
 

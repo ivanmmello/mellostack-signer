@@ -103,50 +103,50 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 2.1 Infraestrutura Comum de Providers
 
-- [ ] Implementar cliente HTTP reutilizável (timeouts, retry, logging)
-- [ ] Implementar fluxo OAuth2 Authorization Code + PKCE
-- [ ] Implementar refresh de token OAuth2
-- [ ] Implementar interface CSC (*Cloud Signature Consortium*) genérica
-- [ ] Implementar tratamento padronizado de erros por PSC (HTTP 4xx/5xx, OTP inválido, certificado expirado)
-- [ ] Implementar cache seguro de tokens (TTL, invalidação)
+- [x] Implementar cliente HTTP reutilizável (timeouts, retry, logging) — `SecureHttpClient` (sem retry automático por segurança; redação de segredos)
+- [x] Implementar fluxo OAuth2 Authorization Code + PKCE — `OAuth2PkceGenerator`, `OAuth2AuthorizationUrlBuilder`, `OAuth2TokenClient`
+- [x] Implementar refresh de token OAuth2 — `OAuth2TokenClient.refreshToken()`
+- [~] Implementar interface CSC (*Cloud Signature Consortium*) genérica — OIDs/formatos em `HashAlgorithmOid` / `CscSignatureFormat`; Bird ID usa API REST proprietária compatível
+- [x] Implementar tratamento padronizado de erros por PSC (HTTP 4xx/5xx, OTP inválido, certificado expirado) — `PscException` hierarchy
+- [x] Implementar cache seguro de tokens (TTL, invalidação) — `SecureTokenCache` (fingerprint SHA-256)
 
 ### 2.2 Soluti — Bird ID
 
-- [ ] Implementar `BirdIdProviderBuilder` (Client ID, Client Secret, Environment)
-- [ ] Implementar fluxo de autorização OAuth2 Bird ID
-- [ ] Implementar envio de hash para assinatura via API REST CSC
-- [ ] Implementar suporte a OTP do aplicativo Bird ID
+- [x] Implementar `BirdIdProviderBuilder` (Client ID, Client Secret, Environment)
+- [x] Implementar fluxo de autorização OAuth2 Bird ID — `BirdIdOAuth2Support`
+- [x] Implementar envio de hash para assinatura via API REST CSC — `BirdIdApiClient.signHash()` (formato RAW)
+- [x] Implementar suporte a OTP do aplicativo Bird ID — via OAuth2 no navegador (documentado em `docs/SECURITY.md`)
 - [ ] Validar em ambiente de homologação Soluti
 
 ### 2.3 Certisign — Remote ID
 
-- [ ] Implementar `RemoteIdProviderBuilder`
-- [ ] Implementar fluxo OAuth2 / REST custom Certisign
-- [ ] Implementar envio de hash para assinatura
+- [x] Implementar `RemoteIdProviderBuilder` (Client ID, Client Secret, **apiBaseUrl** obrigatório, Environment)
+- [x] Implementar fluxo OAuth2 / REST ITI — `RemoteIdOAuth2Support` + cliente genérico `ItiCloudPscApiClient`
+- [x] Implementar envio de hash para assinatura via API REST CSC — `RemoteIdApiClient.signHash()` (formato RAW)
 - [ ] Validar em ambiente de homologação Certisign
 
 ### 2.4 Valid — VIDaaS
 
-- [ ] Implementar `VidaasProviderBuilder`
-- [ ] Implementar fluxo OpenID Connect / REST Valid
-- [ ] Implementar envio de hash para assinatura
+- [x] Implementar `VidaasProviderBuilder` (Client ID, Client Secret, Environment)
+- [x] Implementar fluxo OAuth2 / REST Valid — `VidaasOAuth2Support` (QR Code + push) + `VidaasPushAuthenticationClient`
+- [x] Implementar envio de hash para assinatura via API REST CSC — `VidaasApiClient.signHash()` (formato RAW, hash Base64)
 - [ ] Validar em ambiente de homologação Valid
 
 ### 2.5 Safeweb — SAFEID
 
-- [ ] Implementar `SafeIdProviderBuilder`
-- [ ] Implementar fluxo OAuth2 / REST Safeweb
-- [ ] Implementar envio de hash para assinatura
+- [x] Implementar `SafeIdProviderBuilder` (Client ID, Client Secret, Environment)
+- [x] Implementar fluxo OAuth2 / REST Safeweb — `SafeIdOAuth2Support`
+- [x] Implementar envio de hash para assinatura via API REST CSC — `SafeIdApiClient.signHash()` (formato RAW, hash hex)
 - [ ] Validar em ambiente de homologação Safeweb
 
 ### 2.6 Tabela de Compatibilidade PSC
 
 | Prestador (PSC) | Nome Comercial | Protocolo API | Driver | Homologação | Produção |
 | :--- | :--- | :--- | :--- | :---: | :---: |
-| **Soluti** | Bird ID | OAuth2 / REST CSC | `BirdIdProvider` | [ ] | [ ] |
-| **Certisign** | Remote ID | OAuth2 / REST Custom | `RemoteIdProvider` | [ ] | [ ] |
-| **Valid** | VIDaaS | OpenID Connect / REST | `VidaasProvider` | [ ] | [ ] |
-| **Safeweb** | SAFEID | OAuth2 / REST | `SafeIdProvider` | [ ] | [ ] |
+| **Soluti** | Bird ID | OAuth2 / REST CSC | `BirdIdProvider` | [~] | [ ] |
+| **Certisign** | Remote ID | OAuth2 / REST Custom | `RemoteIdProvider` | [~] | [ ] |
+| **Valid** | VIDaaS | OpenID Connect / REST | `VidaasProvider` | [~] | [ ] |
+| **Safeweb** | SAFEID | OAuth2 / REST | `SafeIdProvider` | [~] | [ ] |
 
 ---
 
@@ -312,6 +312,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-30 | Fase 1.2 concluída: DocumentDigestCalculator, HashPayload, EncodingUtils — privacidade PSC (somente hash), Base64/Hex — 23 testes no core |
 | 2026-07-30 | Fase 1.3 concluída: CmsEnvelopeAssembler, CmsAssemblyRequest, signingCertificateV2 e atributos PAdES — CMS detached injectável no PDF — 27 testes no core |
 | 2026-07-30 | Fase 1.4 concluída: CloudSigner.signPdf() orquestra prepare → PSC → CMS → inject; PSCProvider.getSignerCertificate() — 30 testes totais |
+| 2026-07-30 | Fase 2.1/2.2 (parcial): SecureHttpClient, OAuth2 PKCE, BirdIdProvider, BirdIdOAuth2Support — 52 testes totais — docs/SECURITY.md |
 
 ---
 
