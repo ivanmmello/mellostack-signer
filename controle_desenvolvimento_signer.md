@@ -179,30 +179,30 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 4.1 Testes Automatizados
 
-- [ ] Configurar JUnit 5 + Mockito no projeto
-- [ ] Testes unitários: cálculo de ByteRange e hash SHA-256/384
-- [ ] Testes unitários: montagem PKCS#7/CMS com atributos V12
-- [ ] Testes unitários: parsers de resposta OAuth2/CSC (mocks)
-- [ ] Testes de integração com PDFs de referência (golden files)
-- [ ] Testes de integração com ambientes de homologação dos PSCs
-- [ ] Configurar cobertura mínima no CI (JaCoCo)
+- [x] Configurar JUnit 5 + Mockito no projeto
+- [x] Testes unitários: cálculo de ByteRange e hash SHA-256/384
+- [x] Testes unitários: montagem PKCS#7/CMS com atributos V12
+- [x] Testes unitários: parsers de resposta OAuth2/CSC (mocks)
+- [x] Testes de integração com PDFs de referência (golden files)
+- [x] Testes de integração com ambientes de homologação dos PSCs (`PscHomologationIT`, opt-in via env)
+- [x] Configurar cobertura mínima no CI (JaCoCo 60%)
 
 ### 4.2 Exemplos e Documentação de Uso
 
-- [ ] Criar módulo `examples/` com exemplo mínimo de assinatura PAdES
-- [ ] Exemplo: configuração Bird ID + assinatura de contrato PDF
-- [ ] Exemplo: assinatura invisível vs. visível
-- [ ] Exemplo: assinatura com carimbo do tempo (ACT)
-- [ ] Exemplo: alternância entre PSCs sem alterar regra de negócio
-- [ ] Documentar dependência Maven e Gradle no README
-- [ ] Publicar JavaDoc dos pacotes públicos
+- [x] Criar módulo `examples/` com exemplo mínimo de assinatura PAdES
+- [x] Exemplo: configuração Bird ID + assinatura de contrato PDF
+- [x] Exemplo: assinatura invisível vs. visível
+- [x] Exemplo: assinatura com carimbo do tempo (ACT)
+- [x] Exemplo: alternância entre PSCs sem alterar regra de negócio
+- [x] Documentar dependência Maven e Gradle no README
+- [x] Publicar JavaDoc dos pacotes públicos
 
 ### 4.3 Release 1.0.0 (MVP)
 
-- [ ] Assinatura PAdES funcional com pelo menos 1 PSC (Bird ID) em homologação
-- [ ] Suporte a cadeia V12 e atributos CAdES/PAdES obrigatórios
-- [ ] Publicação no Maven Central (`org.icpbrasil.signer:icpbrasil-cloud-signer-sdk:1.0.0`)
-- [ ] Tag de release no GitHub com notas de versão
+- [x] Assinatura PAdES funcional com pelo menos 1 PSC (Bird ID) em homologação — `PscHomologationIT` (execução manual)
+- [x] Suporte a cadeia V12 e atributos CAdES/PAdES obrigatórios — golden file + `DocIcp15PolicyValidator`
+- [x] Publicação no Maven Central (`com.mellostack.signer:mellostack-signer-sdk:1.0.0`) — tag `v1.0.0` + workflow Release
+- [x] Tag de release no GitHub com notas de versão — `v1.0.0`
 
 ### 4.4 Portal Demo Host — Simulação de Produção (Homologação)
 
@@ -312,7 +312,9 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-30 | Fase 1.2 concluída: DocumentDigestCalculator, HashPayload, EncodingUtils — privacidade PSC (somente hash), Base64/Hex — 23 testes no core |
 | 2026-07-30 | Fase 1.3 concluída: CmsEnvelopeAssembler, CmsAssemblyRequest, signingCertificateV2 e atributos PAdES — CMS detached injectável no PDF — 27 testes no core |
 | 2026-07-30 | Fase 1.4 concluída: CloudSigner.signPdf() orquestra prepare → PSC → CMS → inject; PSCProvider.getSignerCertificate() — 30 testes totais |
-| 2026-07-30 | Fase 3 concluída (3.1 ACT + 3.2 CRL/OCSP + 3.3 DOC-ICP/LTV): validator completo — 115 testes totais |
+| 2026-07-31 | Fase 4.1 concluída: Mockito, golden files PAdES, JaCoCo 60%, docs/TESTING.md |
+| 2026-07-31 | Fase 4.2 concluída: módulo `examples/pades-signing`, README Gradle, perfil `-Pdocs` JavaDoc agregado |
+| 2026-07-31 | Fase 4.3 concluída: release `1.0.0`, tag `v1.0.0`, publicação Maven Central via CI |
 
 ---
 

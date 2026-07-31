@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -30,7 +30,7 @@ jobs:
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Publish release
-        run: mvn -B -Prelease clean deploy -DskipTests
+        run: mvn -B -Prelease clean deploy -DskipTests -pl mellostack-signer-core,mellostack-signer-providers,mellostack-signer-validator,mellostack-signer-sdk -am
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}

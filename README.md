@@ -29,14 +29,32 @@ O documento do cliente **nunca** é enviado ao PSC. Apenas o hash SHA-256/384 ge
 mvn clean verify
 ```
 
-## Dependência Maven
+## Dependência
+
+### Maven
 
 ```xml
 <dependency>
     <groupId>com.mellostack.signer</groupId>
     <artifactId>mellostack-signer-sdk</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
+```
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+dependencies {
+    implementation("com.mellostack.signer:mellostack-signer-sdk:1.0.0")
+}
+```
+
+### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation 'com.mellostack.signer:mellostack-signer-sdk:1.0.0'
+}
 ```
 
 ## Quick Start
@@ -58,6 +76,36 @@ SignatureOptions options = SignatureOptions.builder()
 byte[] pdfSignedBytes = signer.signPdf(pdfBytesOriginal, options);
 ```
 
+## Release
+
+Instruções para publicar no Maven Central: [docs/RELEASE.md](docs/RELEASE.md).
+
+## Exemplos
+
+Programas executáveis em [`examples/pades-signing`](examples/README.md):
+
+| Classe | Descrição |
+| :--- | :--- |
+| `MinimalPadesSigningExample` | Assinatura PAdES mínima |
+| `BirdIdContractSigningExample` | Bird ID + contrato PDF |
+| `VisibleInvisibleSignatureExample` | Assinatura visível vs. invisível |
+| `TimestampSigningExample` | PAdES-T com ACT (RFC 3161) |
+| `MultiPscSigningExample` | Alternância entre PSCs |
+
+```bash
+mvn -pl examples/pades-signing -am package -DskipTests
+```
+
+## JavaDoc
+
+Gera documentação agregada dos pacotes públicos em `target/site/apidocs/`:
+
+```bash
+mvn -Pdocs clean verify -DskipTests
+```
+
+Pacotes documentados: `org.icpbrasil.signer.core`, `.model`, `.provider`, `.providers`, `.validator`.
+
 ## Estrutura do repositório
 
 ```
@@ -66,16 +114,20 @@ mellostack-signer/
 ├── mellostack-signer-providers/
 ├── mellostack-signer-validator/
 ├── mellostack-signer-sdk/
+├── examples/                # Exemplos executáveis (não publicados)
 └── apps/                    # Portal demo (homologação — Fase 4.4)
 ```
 
 ## Documentação
 
+- [Exemplos de uso](examples/README.md)
+- [Guia de testes](docs/TESTING.md)
 - [Documentação técnica V12](Documentacao_ICP_Brasil_Cloud_Signer_V12.md)
 - [Controle de desenvolvimento](controle_desenvolvimento_signer.md)
 - [Arquitetura de drivers PSC](docs/PSC_PROVIDERS.md)
 - [Versionamento (SemVer)](docs/VERSIONING.md)
 - [Setup GitHub](docs/GITHUB_SETUP.md)
+- [Release 1.0.0](docs/RELEASE.md)
 - [Publicação Maven Central](docs/MAVEN_CENTRAL.md)
 - [Guia de contribuição](CONTRIBUTING.md)
 - [Código de conduta](CODE_OF_CONDUCT.md)
