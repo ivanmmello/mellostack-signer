@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.mellostack.signer</groupId>
         <artifactId>mellostack-signer</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>mellostack-signer-examples</artifactId>
