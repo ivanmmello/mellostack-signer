@@ -86,14 +86,14 @@ Para utilizar a biblioteca no projeto Java, adicione a seguinte dependência no 
 <dependency>
     <groupId>com.mellostack.signer</groupId>
     <artifactId>mellostack-signer-sdk</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
 Se estiver utilizando Gradle (Kotlin / Groovy) [cite: 2]:
 
 ```groovy
-implementation 'com.mellostack.signer:mellostack-signer-sdk:1.0.0-SNAPSHOT'
+implementation 'com.mellostack.signer:mellostack-signer-sdk:1.0.0'
 ```
 
 ---

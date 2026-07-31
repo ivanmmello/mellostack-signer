@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mellostack.signer</groupId>
+        <artifactId>mellostack-signer-examples</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>mellostack-signer-examples-pades</artifactId>
+    <name>MelloStack Signer — PAdES Examples</name>
+    <description>Exemplos executáveis de assinatura PAdES em nuvem</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.mellostack.signer</groupId>
+            <artifactId>mellostack-signer-sdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -28,13 +28,17 @@ public final class CloudSigner {
     private final PadesSignatureInjector injector;
     private final TimestampAuthority timestampAuthority;
 
+    /**
+     * @param provider driver PSC configurado (Bird ID, Remote ID, etc.)
+     */
     public CloudSigner(PSCProvider provider) {
         this(provider, null);
     }
 
     /**
+     * @param provider           driver PSC configurado
      * @param timestampAuthority ACT configurável pela aplicação host (por tenant/ambiente).
-     *                           Obrigatória quando {@link SignatureOptions#isTimestamp()} for {@code true}.
+     *                           Obrigatória quando {@link SignatureOptions#isTimestamp()} for {@code true}
      */
     public CloudSigner(PSCProvider provider, TimestampAuthority timestampAuthority) {
         this(provider, timestampAuthority, new PadesSignaturePreparer(), new PadesSignatureInjector());
@@ -119,10 +123,12 @@ public final class CloudSigner {
         }
     }
 
+    /** @return driver PSC associado a esta instância */
     public PSCProvider getProvider() {
         return provider;
     }
 
+    /** @return ACT configurada, ou {@code null} quando assinatura sem carimbo do tempo */
     public TimestampAuthority getTimestampAuthority() {
         return timestampAuthority;
     }
