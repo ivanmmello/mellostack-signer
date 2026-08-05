@@ -115,16 +115,30 @@ mellostack-signer/
 ├── mellostack-signer-validator/
 ├── mellostack-signer-sdk/
 ├── examples/                # Exemplos executáveis (não publicados)
-└── apps/                    # Portal demo (homologação — Fase 4.4)
+└── apps/                    # Portal demo homologação (Fase 4.4 — não publicado)
+    ├── signer-demo-api/     # Spring Boot :8096
+    └── signer-demo-web/     # React + Vite :5173
+```
+
+## Portal demo (homologação)
+
+Referência de integração ponta a ponta — **não é produto**. Ver [`apps/README.md`](apps/README.md).
+
+```bash
+mvn clean install -DskipTests
+cd apps/signer-demo-api && mvn spring-boot:run
+cd apps/signer-demo-web && npm install && npm run dev
 ```
 
 ## Documentação
 
 - [Exemplos de uso](examples/README.md)
+- [Portal demo homologação](apps/README.md)
 - [Guia de testes](docs/TESTING.md)
 - [Documentação técnica V12](Documentacao_ICP_Brasil_Cloud_Signer_V12.md)
 - [Controle de desenvolvimento](controle_desenvolvimento_signer.md)
 - [Arquitetura de drivers PSC](docs/PSC_PROVIDERS.md)
+- [Signer Agent — token/cartão A1/A3 (roadmap)](docs/LOCAL_AGENT.md)
 - [Versionamento (SemVer)](docs/VERSIONING.md)
 - [Setup GitHub](docs/GITHUB_SETUP.md)
 - [Release 1.0.0](docs/RELEASE.md)

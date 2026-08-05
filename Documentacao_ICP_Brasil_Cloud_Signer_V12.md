@@ -20,6 +20,7 @@ Com a migração progressiva da infraestrutura de chaves públicas brasileira do
 > * **Privacidade Total dos Dados:** O documento do cliente NUNCA é enviado para o PSC. Apenas o hash SHA-256 / SHA-384 gerado localmente pelo JAR é transmitido para assinatura [cite: 2].
 > * **Zero Boilerplate:** O desenvolvedor precisa de menos de 10 linhas de código para autenticar o usuário, enviar o hash para o PSC e obter o documento assinado [cite: 2].
 > * **Multi-PSC Plugável:** Arquitetura baseada em drivers que permite alternar entre Soluti (BirdID), Certisign (RemoteID), Valid (VIDaaS) e Safeweb (SAFEID) sem alterar a regra de negócio do sistema [cite: 2].
+> * **Dual-mode (roadmap):** Nuvem via PSC (sem install) + **Signer Agent** genérico para token/cartão A1/A3 — compatível com SafeNet e dxSafe simultâneos (ver [`docs/LOCAL_AGENT.md`](docs/LOCAL_AGENT.md)).
 
 ---
 

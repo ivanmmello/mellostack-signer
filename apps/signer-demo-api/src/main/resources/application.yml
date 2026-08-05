@@ -1,0 +1,25 @@
+server:
+  port: 8096
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+demo:
+  frontend-url: ${DEMO_FRONTEND_URL:http://localhost:5173}
+  oauth-redirect-uri: ${DEMO_OAUTH_REDIRECT_URI:http://localhost:8096/api/v1/oauth/callback}
+  psc:
+    provider: ${PSC_PROVIDER:birdid}
+    environment: ${PSC_ENVIRONMENT:homologation}
+    client-id: ${PSC_CLIENT_ID:}
+    client-secret: ${PSC_CLIENT_SECRET:}
+    api-base-url: ${PSC_API_BASE_URL:}
+    certificate-alias: ${PSC_CERTIFICATE_ALIAS:}
+  act:
+    tsa-url: ${ACT_TSA_URL:}
+
+logging:
+  level:
+    com.mellostack.signer.demo: INFO

@@ -1,0 +1,28 @@
+services:
+  signer-demo-api:
+    build:
+      context: ..
+      dockerfile: apps/signer-demo-api/Dockerfile
+    ports:
+      - "8096:8096"
+    environment:
+      PSC_PROVIDER: ${PSC_PROVIDER:-birdid}
+      PSC_ENVIRONMENT: ${PSC_ENVIRONMENT:-homologation}
+      PSC_CLIENT_ID: ${PSC_CLIENT_ID}
+      PSC_CLIENT_SECRET: ${PSC_CLIENT_SECRET}
+      PSC_API_BASE_URL: ${PSC_API_BASE_URL:-}
+      PSC_CERTIFICATE_ALIAS: ${PSC_CERTIFICATE_ALIAS:-}
+      DEMO_OAUTH_REDIRECT_URI: ${DEMO_OAUTH_REDIRECT_URI:-http://localhost:8096/api/v1/oauth/callback}
+      DEMO_FRONTEND_URL: ${DEMO_FRONTEND_URL:-http://localhost:5173}
+      ACT_TSA_URL: ${ACT_TSA_URL:-}
+
+  signer-demo-web:
+    build:
+      context: signer-demo-web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8096
+    depends_on:
+      - signer-demo-api
