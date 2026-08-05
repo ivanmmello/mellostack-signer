@@ -210,37 +210,37 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 #### 4.4.1 Backend Demo API (`apps/signer-demo-api`)
 
-- [ ] Criar projeto Spring Boot 3 (porta 8096) em `apps/signer-demo-api`
-- [ ] Adicionar dependência do `icpbrasil-cloud-signer-sdk` (módulo local via Maven reactor)
-- [ ] Endpoint POST `/api/v1/sign/prepare` — recebe PDF + opções, retorna estado da sessão
-- [ ] Endpoint GET `/api/v1/oauth/authorize` — inicia redirect OAuth2 + PKCE para o PSC selecionado
-- [ ] Endpoint GET `/api/v1/oauth/callback` — recebe callback, troca code por access token
-- [ ] Endpoint POST `/api/v1/sign/execute` — invoca `CloudSigner.signPdf()` com token OAuth2
-- [ ] Endpoint GET `/api/v1/sign/{sessionId}/download` — retorna PDF assinado
-- [ ] Endpoint GET `/health` — health check
-- [ ] Configurar credenciais PSC via variáveis de ambiente (`.env`, nunca commitadas)
-- [ ] CORS liberado para o front demo (`signer-demo-web`)
-- [ ] Dockerfile + entrada no docker-compose do monorepo (opcional)
+- [x] Criar projeto Spring Boot 3 (porta 8096) em `apps/signer-demo-api`
+- [x] Adicionar dependência do `mellostack-signer-sdk` (módulo local via Maven reactor)
+- [x] Endpoint POST `/api/v1/sign/prepare` — recebe PDF + opções, retorna estado da sessão
+- [x] Endpoint GET `/api/v1/oauth/authorize` — inicia redirect OAuth2 + PKCE para o PSC selecionado
+- [x] Endpoint GET `/api/v1/oauth/callback` — recebe callback, troca code por access token
+- [x] Endpoint POST `/api/v1/sign/execute` — invoca `CloudSigner.signPdf()` com token OAuth2
+- [x] Endpoint GET `/api/v1/sign/{sessionId}/download` — retorna PDF assinado
+- [x] Endpoint GET `/health` — health check
+- [x] Configurar credenciais PSC via variáveis de ambiente (`.env`, nunca commitadas)
+- [x] CORS liberado para o front demo (`signer-demo-web`)
+- [x] Dockerfile + entrada no docker-compose do monorepo (opcional)
 
 #### 4.4.2 Frontend Demo Portal (`apps/signer-demo-web`)
 
-- [ ] Criar projeto React 19 + Vite + TypeScript em `apps/signer-demo-web`
-- [ ] Tela **Nova assinatura**: upload PDF (drag & drop), seleção de PSC e ambiente
-- [ ] Tela **Autorização**: fluxo OAuth2 (redirect + retorno automático ao callback da API)
-- [ ] Tela **OTP**: input de código quando exigido pelo PSC (Bird ID, etc.)
-- [ ] Tela **Opções**: reason, location, assinatura visível/invisível, carimbo do tempo (ACT)
-- [ ] Tela **Processamento**: feedback visual das etapas (hash → PSC → PKCS#7 → PAdES)
-- [ ] Tela **Resultado**: download do PDF assinado + metadados (certificado, data, cadeia V12)
-- [ ] Tela **Histórico de testes**: listagem local das assinaturas de homologação da sessão
-- [ ] Integração com API demo via fetch/axios (base URL configurável)
-- [ ] Layout responsivo mínimo para testes em desktop e mobile
+- [x] Criar projeto React 19 + Vite + TypeScript em `apps/signer-demo-web`
+- [x] Tela **Nova assinatura**: upload PDF (drag & drop), seleção de PSC e ambiente
+- [x] Tela **Autorização**: fluxo OAuth2 (redirect + retorno automático ao callback da API)
+- [x] Tela **OTP**: input de código quando exigido pelo PSC (Bird ID, etc.)
+- [x] Tela **Opções**: reason, location, assinatura visível/invisível, carimbo do tempo (ACT)
+- [x] Tela **Processamento**: feedback visual das etapas (hash → PSC → PKCS#7 → PAdES)
+- [x] Tela **Resultado**: download do PDF assinado + metadados (certificado, data, cadeia V12)
+- [x] Tela **Histórico de testes**: listagem local das assinaturas de homologação da sessão
+- [x] Integração com API demo via fetch/axios (base URL configurável)
+- [x] Layout responsivo mínimo para testes em desktop e mobile
 
 #### 4.4.3 Validação Ponta a Ponta
 
 - [ ] Testar fluxo completo com Bird ID em homologação via portal demo
 - [ ] Testar alternância de PSC sem alterar código da API (apenas config/seleção)
-- [ ] Documentar no README como subir demo local (`demo-api` + `demo-web`)
-- [ ] Marcar explicitamente no README que o portal **não é produto** — é referência de integração
+- [x] Documentar no README como subir demo local (`demo-api` + `demo-web`)
+- [x] Marcar explicitamente no README que o portal **não é produto** — é referência de integração
 
 ---
 
@@ -275,6 +275,35 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 - [ ] Integração Quarkus Extension
 - [ ] SDK Kotlin (wrapper idiomatico sobre o JAR Java)
 
+### 5.5 Release 1.4.0 — Certificados locais A1 (PKCS#12)
+
+- [ ] Criar módulo `mellostack-signer-local` (`LocalKeyProvider`, `Pkcs12Provider`)
+- [ ] Fachada `LocalSigner` reutilizando core PAdES V12 (mesmo pipeline que `CloudSigner`)
+- [ ] Exemplo CLI assinatura A1 institucional (PFX em cofre)
+- [ ] Testes unitários com keystore de teste
+
+### 5.6 Release 1.5.0 — MelloStack Signer Agent (token/cartão A3)
+
+- [ ] App `apps/signer-agent/` — REST loopback + bandeja + instalador JPackage (MSI)
+- [ ] **Compatibilidade multi-middleware:** SafeNet + dxSafe + outros PKCS#11 simultâneos (ver `docs/LOCAL_AGENT.md`)
+- [ ] PKCS#11 via config isolada por vendor (`SunPKCS11`); worker pool se DLL conflict
+- [ ] API `/v1/certificates`, `/v1/sign/pdf`, consentimento do usuário, allowlist CORS
+- [ ] Pacote NPM `@mellostack/signer-agent` (cliente browser genérico)
+- [ ] Matriz de homologação: SafeNet, dxSafe, SafeNet+dxSafe, A1 arquivo
+
+### 5.7 Portal demo — modo dual (nuvem + agent)
+
+- [ ] Seletor de modo: Nuvem (PSC) | Token local (Agent)
+- [ ] Detecção agent offline → link download instalador genérico
+- [ ] Documentar integração para qualquer cliente (não vertical específico)
+
+### 5.8 Agilidade criptográfica (PQC — quando ITI normatizar)
+
+- [ ] Abstração de algoritmo de assinatura no core (preparação PQC)
+- [ ] Documentar limites atuais: V12 = RSA/SHA-2; PQC quando cadeia ICP atualizar
+
+> **Documentação:** [`docs/LOCAL_AGENT.md`](docs/LOCAL_AGENT.md) — arquitetura agente, incompatibilidade multi-middleware, stack Java 17 + JPackage, segurança.
+
 ---
 
 ## Cronograma Estimado (Roadmap)
@@ -290,6 +319,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | Fase 5.1 — Batch | Q1 2027 | Release 1.1.0 |
 | Fase 5.2 — CLI | Q1 2027 | Release 1.2.0 |
 | Fase 5.3 — XAdES/NF-e | Q2 2027 | Release 1.3.0 |
+| Fase 5.5–5.6 — Local + Agent | Q2–Q3 2027 | Releases 1.4.0 / 1.5.0 |
 
 **MVP (Fases 0–4): Q3–Q4 2026**  
 **Release 1.0.0: Q4 2026**  
@@ -315,6 +345,7 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-31 | Fase 4.1 concluída: Mockito, golden files PAdES, JaCoCo 60%, docs/TESTING.md |
 | 2026-07-31 | Fase 4.2 concluída: módulo `examples/pades-signing`, README Gradle, perfil `-Pdocs` JavaDoc agregado |
 | 2026-07-31 | Fase 4.3 concluída: release `1.0.0`, tag `v1.0.0`, publicação Maven Central via CI |
+| 2026-07-31 | Fase 4.4 implementada: portal demo `apps/signer-demo-api` + `apps/signer-demo-web`, docs e docker-compose |
 
 ---
 
