@@ -21,8 +21,15 @@ final class ItiCloudPscSignatureResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     static final class SignatureEntry {
 
+        @JsonProperty("id")
+        private String id;
+
         @JsonProperty("raw_signature")
         private String rawSignature;
+
+        String id() {
+            return id;
+        }
 
         String rawSignature() {
             return rawSignature;

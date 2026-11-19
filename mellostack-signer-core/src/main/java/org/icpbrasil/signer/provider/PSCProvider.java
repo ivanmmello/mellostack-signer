@@ -3,7 +3,9 @@ package org.icpbrasil.signer.provider;
 import org.icpbrasil.signer.model.Environment;
 
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Contrato para drivers plugáveis de Prestadores de Serviço de Confiança (PSC).
@@ -40,6 +42,43 @@ public interface PSCProvider {
      * @return assinatura criptográfica raw retornada pelo HSM em nuvem
      */
     byte[] signHash(byte[] documentHash, String accessToken);
+
+    /**
+     * Assina múltiplos hashes do documento em uma única requisição ao PSC quando suportado
+     * ({@link #supportsBatchSigning()}), permitindo autorização/OTP único para o lote.
+     * <p>
+     * Implementações que não suportam lote nativo fazem {@code N} chamadas a {@link #signHash}.
+     *
+     * @param documentHashes hashes SHA-256 (32 bytes) ou SHA-384 (48 bytes), na ordem de assinatura
+     * @param accessToken    token OAuth2 do usuário final
+     * @return assinaturas raw na mesma ordem de {@code documentHashes}
+     */
+    default List<byte[]> signHashes(List<byte[]> documentHashes, String accessToken) {
+        Objects.requireNonNull(documentHashes, "documentHashes");
+        if (documentHashes.isEmpty()) {
+            throw new IllegalArgumentException("documentHashes must not be empty");
+        }
+        List<byte[]> signatures = new ArrayList<>(documentHashes.size());
+        for (byte[] documentHash : documentHashes) {
+            signatures.add(signHash(documentHash, accessToken));
+        }
+        return signatures;
+    }
+
+    /**
+     * Indica se {@link #signHashes(List, String)} envia todos os hashes em uma única requisição PSC.
+     */
+    default boolean supportsBatchSigning() {
+        return false;
+    }
+
+    /**
+     * {@code true} quando {@link #signHash} devolve o envelope CMS/CAdES já montado
+     * (ex.: Integra Bry / HUB Signer). O padrão é assinatura raw, montada localmente.
+     */
+    default boolean returnsPreparedCms() {
+        return false;
+    }
 
     /**
      * Certificado ICP-Brasil do signatário associado ao token OAuth2 (credencial CSC ativa).

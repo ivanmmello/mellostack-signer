@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,20 +63,55 @@ public final class ItiCloudPscApiClient {
             String certificateAlias,
             byte[] documentHash,
             DigestAlgorithm digestAlgorithm) {
+        List<byte[]> signatures = signHashes(
+                accessToken,
+                certificateAlias,
+                List.of(new DocumentHashRequest("1", documentHash, digestAlgorithm))
+        );
+        return signatures.get(0);
+    }
+
+    /**
+     * Assina múltiplos hashes em uma única requisição REST CSC/ITI ({@code hashes[]} no body).
+     */
+    public List<byte[]> signHashes(
+            String accessToken,
+            String certificateAlias,
+            List<DocumentHashRequest> documentHashes) {
         ItiCloudPscValidation.validateAccessToken(accessToken);
         ItiCloudPscValidation.validateCertificateAlias(certificateAlias);
-        ItiCloudPscValidation.validateDocumentHash(documentHash);
+        Objects.requireNonNull(documentHashes, "documentHashes");
+        if (documentHashes.isEmpty()) {
+            throw new IllegalArgumentException("documentHashes must not be empty");
+        }
+        if (documentHashes.size() > ItiCloudPscValidation.MAX_BATCH_HASH_COUNT) {
+            throw new IllegalArgumentException(
+                    "documentHashes exceeds maximum batch size of "
+                            + ItiCloudPscValidation.MAX_BATCH_HASH_COUNT);
+        }
+        for (DocumentHashRequest entry : documentHashes) {
+            Objects.requireNonNull(entry, "documentHashes entry");
+            ItiCloudPscValidation.validateDocumentHash(entry.hash());
+            Objects.requireNonNull(entry.digestAlgorithm(), "digestAlgorithm");
+            if (entry.id() == null || entry.id().isBlank()) {
+                throw new IllegalArgumentException("document hash id must not be blank");
+            }
+        }
 
-        Map<String, Object> hashEntry = new LinkedHashMap<>();
-        hashEntry.put("id", "1");
-        hashEntry.put("alias", SIGNATURE_HISTORY_ALIAS);
-        hashEntry.put("hash", encodeHash(documentHash));
-        hashEntry.put("hash_algorithm", HashAlgorithmOid.forDigest(digestAlgorithm));
-        hashEntry.put("signature_format", CscSignatureFormat.RAW.apiValue());
+        List<Map<String, Object>> hashEntries = new ArrayList<>(documentHashes.size());
+        for (DocumentHashRequest entry : documentHashes) {
+            Map<String, Object> hashEntry = new LinkedHashMap<>();
+            hashEntry.put("id", entry.id());
+            hashEntry.put("alias", SIGNATURE_HISTORY_ALIAS);
+            hashEntry.put("hash", encodeHash(entry.hash()));
+            hashEntry.put("hash_algorithm", HashAlgorithmOid.forDigest(entry.digestAlgorithm()));
+            hashEntry.put("signature_format", CscSignatureFormat.RAW.apiValue());
+            hashEntries.add(hashEntry);
+        }
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("certificate_alias", certificateAlias);
-        body.put("hashes", List.of(hashEntry));
+        body.put("hashes", hashEntries);
 
         try {
             String json = MAPPER.writeValueAsString(body);
@@ -83,12 +120,15 @@ public final class ItiCloudPscApiClient {
                     SecureHttpClient.bearerHeaders(accessToken),
                     json
             );
-            return parseRawSignature(response);
+            return parseRawSignatures(response, documentHashes.size());
         } catch (PscException e) {
             throw e;
         } catch (Exception e) {
-            throw new PscSigningException("Failed to sign hash via " + providerLabel, e);
+            throw new PscSigningException("Failed to sign hashes via " + providerLabel, e);
         }
+    }
+
+    public record DocumentHashRequest(String id, byte[] hash, DigestAlgorithm digestAlgorithm) {
     }
 
     private String encodeHash(byte[] documentHash) {
@@ -136,10 +176,28 @@ public final class ItiCloudPscApiClient {
         }
     }
 
-    private byte[] parseRawSignature(String responseJson) throws Exception {
+    private List<byte[]> parseRawSignatures(String responseJson, int expectedCount) throws Exception {
         ItiCloudPscSignatureResponse parsed = MAPPER.readValue(responseJson, ItiCloudPscSignatureResponse.class);
         if (!parsed.signatures().isEmpty()) {
-            return decodeRawSignature(parsed.signatures().get(0).rawSignature());
+            List<ItiCloudPscSignatureResponse.SignatureEntry> ordered = parsed.signatures().stream()
+                    .sorted(Comparator.comparing(
+                            entry -> entry.id() != null ? entry.id() : "",
+                            Comparator.naturalOrder()))
+                    .toList();
+            if (ordered.size() != expectedCount) {
+                throw new PscSigningException(providerLabel + " returned "
+                        + ordered.size() + " signatures, expected " + expectedCount);
+            }
+            List<byte[]> signatures = new ArrayList<>(expectedCount);
+            for (ItiCloudPscSignatureResponse.SignatureEntry entry : ordered) {
+                signatures.add(decodeRawSignature(entry.rawSignature()));
+            }
+            return signatures;
+        }
+
+        if (expectedCount != 1) {
+            throw new PscSigningException(
+                    providerLabel + " batch signature response missing signatures array");
         }
 
         ItiCloudPscFlatSignatureResponse flat =
@@ -147,7 +205,7 @@ public final class ItiCloudPscApiClient {
         if (!isSuccessStatus(flat.status())) {
             throw new PscSigningException(providerLabel + " signature request failed");
         }
-        return decodeRawSignature(flat.rawSignature());
+        return List.of(decodeRawSignature(flat.rawSignature()));
     }
 
     private byte[] decodeRawSignature(String rawSignature) {

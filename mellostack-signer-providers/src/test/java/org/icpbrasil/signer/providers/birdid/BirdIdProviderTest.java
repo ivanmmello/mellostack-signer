@@ -70,6 +70,19 @@ class BirdIdProviderTest {
     }
 
     @Test
+    void signHashesUsesSingleBatchCall() throws Exception {
+        byte[] hash1 = MessageDigest.getInstance("SHA-256").digest("pdf1".getBytes());
+        byte[] hash2 = MessageDigest.getInstance("SHA-256").digest("pdf2".getBytes());
+
+        List<byte[]> signatures = provider.signHashes(List.of(hash1, hash2), "user-token");
+
+        assertEquals(2, signatures.size());
+        assertEquals(1, apiClient.batchSignCalls);
+        assertEquals(2, apiClient.lastBatchHashes.size());
+        assertTrue(provider.supportsBatchSigning());
+    }
+
+    @Test
     void rejectsInvalidHashLength() {
         assertThrows(IllegalArgumentException.class,
                 () -> provider.signHash(new byte[16], "user-token"));
@@ -138,6 +151,21 @@ class BirdIdProviderTest {
             lastCertificateAlias = certificateAlias;
             lastDigestAlgorithm = digestAlgorithm;
             return rawSignature.clone();
+        }
+
+        int batchSignCalls;
+        List<byte[]> lastBatchHashes;
+
+        @Override
+        public List<byte[]> signHashes(
+                String accessToken,
+                String certificateAlias,
+                List<byte[]> documentHashes) {
+            batchSignCalls++;
+            lastAccessToken = accessToken;
+            lastCertificateAlias = certificateAlias;
+            lastBatchHashes = documentHashes;
+            return documentHashes.stream().map(hash -> rawSignature.clone()).toList();
         }
     }
 }

@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.mockito.ArgumentCaptor;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -115,5 +117,43 @@ class ItiCloudPscApiClientTest {
         assertEquals(1, certificates.size());
         assertEquals("CERT-1", certificates.get(0).alias());
         verify(httpClient).get(eq(ENDPOINTS.certificateDiscoveryUrl()), anyMap());
+    }
+
+    @Test
+    void signsMultipleHashesInSingleRequest() throws Exception {
+        when(httpClient.postJson(eq(ENDPOINTS.signatureUrl()), anyMap(), anyString()))
+                .thenReturn("""
+                        {
+                          "signatures": [
+                            { "id": "1", "raw_signature": "%s" },
+                            { "id": "2", "raw_signature": "%s" }
+                          ]
+                        }
+                        """.formatted(
+                        EncodingUtils.toBase64(new byte[]{1, 2}),
+                        EncodingUtils.toBase64(new byte[]{3, 4})));
+
+        ItiCloudPscApiClient client = new ItiCloudPscApiClient(
+                ENDPOINTS,
+                httpClient,
+                HashEncoding.BASE64,
+                "TestPSC"
+        );
+
+        List<byte[]> signatures = client.signHashes(
+                "token",
+                "alias-1",
+                List.of(
+                        new ItiCloudPscApiClient.DocumentHashRequest("1", new byte[32], DigestAlgorithm.SHA256),
+                        new ItiCloudPscApiClient.DocumentHashRequest("2", new byte[32], DigestAlgorithm.SHA256)
+                )
+        );
+
+        assertEquals(2, signatures.size());
+        assertArrayEquals(new byte[]{1, 2}, signatures.get(0));
+        assertArrayEquals(new byte[]{3, 4}, signatures.get(1));
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(httpClient).postJson(eq(ENDPOINTS.signatureUrl()), anyMap(), bodyCaptor.capture());
+        assertTrue(bodyCaptor.getValue().contains("\"id\":\"2\""));
     }
 }

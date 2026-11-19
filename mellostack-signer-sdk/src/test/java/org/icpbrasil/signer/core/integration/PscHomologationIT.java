@@ -13,8 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -79,6 +81,37 @@ class PscHomologationIT {
         assertTrue(result.isValid(), "PAdES local validation failed: " + result);
         assertTrue(result.docIcpCompliant(), "DOC-ICP-15 policy check failed");
         assertNotNull(result.signerCertificate());
+    }
+
+    @Test
+    void birdIdSignsPdfBatchInHomologation() {
+        PSCProvider provider = new BirdIdProviderBuilder()
+                .withEnvironment(Environment.HOMOLOGATION)
+                .withClientId(requiredEnv("BIRDID_CLIENT_ID"))
+                .withClientSecret(requiredEnv("BIRDID_CLIENT_SECRET"))
+                .withCertificateAlias(optionalEnv("BIRDID_CERTIFICATE_ALIAS"))
+                .build();
+
+        assertTrue(provider.supportsBatchSigning());
+
+        CloudSigner signer = new CloudSigner(provider);
+        SignatureOptions options = SignatureOptions.builder()
+                .withUserAccessToken(requiredEnv("PSC_ACCESS_TOKEN"))
+                .withReason("MelloStack Signer — homologação batch Bird ID")
+                .withLocation("Brasil")
+                .withTimestamp(false)
+                .withVisibleSignature(false)
+                .build();
+
+        List<byte[]> signedPdfs = signer.signPdfBatch(List.of(samplePdf, samplePdf), options);
+        assertEquals(2, signedPdfs.size());
+
+        for (byte[] signedPdf : signedPdfs) {
+            PadesValidationResult result = SignatureValidator.validateSignedPdf(signedPdf);
+            assertTrue(result.isValid(), "PAdES local validation failed: " + result);
+            assertTrue(result.docIcpCompliant(), "DOC-ICP-15 policy check failed");
+            assertNotNull(result.signerCertificate());
+        }
     }
 
     private static String requiredEnv(String name) {

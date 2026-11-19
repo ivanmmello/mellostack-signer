@@ -6,6 +6,7 @@ import org.icpbrasil.signer.providers.http.HttpClientFacade;
 import org.icpbrasil.signer.providers.iti.HashEncoding;
 import org.icpbrasil.signer.providers.iti.ItiCloudPscApiClient;
 import org.icpbrasil.signer.providers.iti.ItiCloudPscEndpoints;
+import org.icpbrasil.signer.providers.iti.ItiCloudPscProviderSupport;
 import org.icpbrasil.signer.providers.iti.ItiCloudPscValidation;
 
 import java.util.List;
@@ -42,6 +43,15 @@ public final class SafeIdApiClient implements SafeIdGateway {
             byte[] documentHash,
             DigestAlgorithm digestAlgorithm) {
         return delegate.signHash(accessToken, certificateAlias, documentHash, digestAlgorithm);
+    }
+
+    @Override
+    public List<byte[]> signHashes(
+            String accessToken,
+            String certificateAlias,
+            List<byte[]> documentHashes) {
+        return ItiCloudPscProviderSupport.signHashesViaDelegate(
+                delegate, accessToken, certificateAlias, documentHashes);
     }
 
     static void validateAccessToken(String accessToken) {

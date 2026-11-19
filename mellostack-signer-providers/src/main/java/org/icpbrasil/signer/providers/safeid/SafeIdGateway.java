@@ -16,4 +16,9 @@ interface SafeIdGateway {
             String certificateAlias,
             byte[] documentHash,
             DigestAlgorithm digestAlgorithm);
+
+    List<byte[]> signHashes(
+            String accessToken,
+            String certificateAlias,
+            List<byte[]> documentHashes);
 }

@@ -91,4 +91,36 @@ class OAuth2TokenClientTest {
                 new OAuth2TokenClient.RefreshTokenRequest("client-id", "client-secret", "refresh-456")
         ));
     }
+
+    @Test
+    void exchangesAuthorizationCodeAsForm() {
+        when(httpClient.postForm(eq(TOKEN_URL), anyMap(), org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn("""
+                        {
+                          "access_token": "access-form",
+                          "token_type": "Bearer",
+                          "expires_in": 300
+                        }
+                        """);
+
+        OAuth2TokenClient client = OAuth2TokenClient.formUrlEncoded(TOKEN_URL, httpClient);
+        OAuth2TokenResponse response = client.exchangeAuthorizationCode(
+                new OAuth2TokenClient.AuthorizationCodeRequest(
+                        "client id",
+                        "secret+value",
+                        "auth-code",
+                        "https://app.example/callback",
+                        "verifier",
+                        null));
+
+        assertEquals("access-form", response.accessToken());
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(httpClient).postForm(eq(TOKEN_URL), anyMap(), bodyCaptor.capture());
+        String form = bodyCaptor.getValue();
+        assertTrue(form.contains("grant_type=authorization_code"));
+        assertTrue(form.contains("client_id=client+id"));
+        assertTrue(form.contains("client_secret=secret%2Bvalue"));
+        assertTrue(form.contains("code=auth-code"));
+        assertTrue(form.contains("code_verifier=verifier"));
+    }
 }

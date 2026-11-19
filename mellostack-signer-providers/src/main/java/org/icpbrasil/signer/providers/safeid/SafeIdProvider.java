@@ -63,6 +63,18 @@ public final class SafeIdProvider implements PSCProvider {
     }
 
     @Override
+    public List<byte[]> signHashes(List<byte[]> documentHashes, String accessToken) {
+        SafeIdApiClient.validateAccessToken(accessToken);
+        String alias = resolveCertificateAlias(accessToken);
+        return apiClient.signHashes(accessToken, alias, documentHashes);
+    }
+
+    @Override
+    public boolean supportsBatchSigning() {
+        return true;
+    }
+
+    @Override
     public X509Certificate getSignerCertificate(String accessToken) {
         return resolveCertificate(accessToken).certificate();
     }

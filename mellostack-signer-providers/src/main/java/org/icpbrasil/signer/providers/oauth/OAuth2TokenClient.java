@@ -6,9 +6,12 @@ import org.icpbrasil.signer.providers.exception.PscException;
 import org.icpbrasil.signer.providers.http.HttpClientFacade;
 import org.icpbrasil.signer.providers.http.SecureHttpClient;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Troca authorization code por access token (OAuth2 + PKCE).
@@ -19,13 +22,27 @@ public final class OAuth2TokenClient {
 
     private final HttpClientFacade httpClient;
     private final String tokenEndpoint;
+    private final BodyEncoding bodyEncoding;
 
     public OAuth2TokenClient(String tokenEndpoint, HttpClientFacade httpClient) {
+        this(tokenEndpoint, httpClient, BodyEncoding.JSON);
+    }
+
+    /**
+     * @param bodyEncoding {@link BodyEncoding#FORM} para PSCs que exigem
+     *                     {@code application/x-www-form-urlencoded} (SerproID)
+     */
+    public OAuth2TokenClient(String tokenEndpoint, HttpClientFacade httpClient, BodyEncoding bodyEncoding) {
         this.tokenEndpoint = Objects.requireNonNull(tokenEndpoint, "tokenEndpoint");
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
+        this.bodyEncoding = Objects.requireNonNull(bodyEncoding, "bodyEncoding");
         if (tokenEndpoint.isBlank()) {
             throw new IllegalArgumentException("tokenEndpoint must not be blank");
         }
+    }
+
+    public static OAuth2TokenClient formUrlEncoded(String tokenEndpoint, HttpClientFacade httpClient) {
+        return new OAuth2TokenClient(tokenEndpoint, httpClient, BodyEncoding.FORM);
     }
 
     public OAuth2TokenResponse exchangeAuthorizationCode(AuthorizationCodeRequest request) {
@@ -59,8 +76,10 @@ public final class OAuth2TokenClient {
 
     private OAuth2TokenResponse postToken(Map<String, Object> body) {
         try {
-            String json = MAPPER.writeValueAsString(body);
-            String response = httpClient.postJson(tokenEndpoint, Map.of(), json);
+            String response = switch (bodyEncoding) {
+                case JSON -> httpClient.postJson(tokenEndpoint, Map.of(), MAPPER.writeValueAsString(body));
+                case FORM -> httpClient.postForm(tokenEndpoint, Map.of(), toForm(body));
+            };
             OAuth2TokenResponse token = MAPPER.readValue(response, OAuth2TokenResponse.class);
             if (token.accessToken() == null || token.accessToken().isBlank()) {
                 throw new PscAuthenticationException("OAuth2 token response did not include access_token");
@@ -86,5 +105,21 @@ public final class OAuth2TokenClient {
             String clientId,
             String clientSecret,
             String refreshToken) {
+    }
+
+    public enum BodyEncoding {
+        JSON,
+        FORM
+    }
+
+    private static String toForm(Map<String, Object> body) {
+        return body.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .map(entry -> urlEncode(entry.getKey()) + "=" + urlEncode(String.valueOf(entry.getValue())))
+                .collect(Collectors.joining("&"));
+    }
+
+    private static String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

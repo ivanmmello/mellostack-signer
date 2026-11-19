@@ -6,6 +6,7 @@ import org.icpbrasil.signer.core.pdf.PadesPrepareOptions;
 import org.icpbrasil.signer.core.pdf.PadesSignatureInjector;
 import org.icpbrasil.signer.core.pdf.PadesSignaturePreparer;
 import org.icpbrasil.signer.core.pdf.PreparedSignature;
+import org.icpbrasil.signer.model.BatchSigningLimits;
 import org.icpbrasil.signer.model.SignatureOptions;
 import org.icpbrasil.signer.provider.PSCProvider;
 import org.bouncycastle.cms.CMSException;
@@ -16,7 +17,10 @@ import org.icpbrasil.signer.validator.cms.CmsTimestampEnhancer;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Fachada principal para assinatura digital qualificada em nuvem (PAdES / Cadeia V12).
@@ -72,15 +76,20 @@ public final class CloudSigner {
      * @return bytes do PDF assinado com conformidade ICP-Brasil V12
      */
     public byte[] signPdf(byte[] pdfBytes, SignatureOptions options) {
-        if (pdfBytes == null || pdfBytes.length == 0) {
-            throw new IllegalArgumentException("pdfBytes must not be empty");
-        }
-        if (options == null) {
-            throw new IllegalArgumentException("SignatureOptions must not be null");
-        }
-        if (options.getUserAccessToken() == null || options.getUserAccessToken().isBlank()) {
-            throw new IllegalArgumentException("userAccessToken must not be empty");
-        }
+        List<byte[]> signed = signPdfBatch(List.of(pdfBytes), options);
+        return signed.get(0);
+    }
+
+    /**
+     * Assina múltiplos PDFs com uma única autorização PSC quando o driver suporta lote
+     * ({@link PSCProvider#supportsBatchSigning()}).
+     *
+     * @param pdfBytesList PDFs originais, na ordem desejada de saída
+     * @param options      opções compartilhadas (token OAuth2, reason, location, etc.)
+     * @return PDFs assinados na mesma ordem de {@code pdfBytesList}
+     */
+    public List<byte[]> signPdfBatch(List<byte[]> pdfBytesList, SignatureOptions options) {
+        validateBatchInput(pdfBytesList, options);
         if (options.isTimestamp() && timestampAuthority == null) {
             throw new IllegalStateException(
                     "TimestampAuthority must be configured on CloudSigner when withTimestamp(true)");
@@ -88,12 +97,21 @@ public final class CloudSigner {
 
         try {
             PadesPrepareOptions prepareOptions = PadesPrepareOptions.from(options);
-            PreparedSignature prepared = preparer.prepare(pdfBytes, prepareOptions);
+            List<PreparedSignature> preparedList = new ArrayList<>(pdfBytesList.size());
+            for (byte[] pdfBytes : pdfBytesList) {
+                preparedList.add(preparer.prepare(pdfBytes, prepareOptions));
+            }
 
             String accessToken = options.getUserAccessToken();
-            byte[] rawSignature = provider.signHash(prepared.getDocumentHash(), accessToken);
-            if (rawSignature == null || rawSignature.length == 0) {
-                throw new IllegalStateException("PSC returned an empty signature");
+            List<byte[]> documentHashes = preparedList.stream()
+                    .map(PreparedSignature::getDocumentHash)
+                    .toList();
+
+            boolean preparedCms = provider.returnsPreparedCms();
+            List<byte[]> rawSignatures = provider.signHashes(documentHashes, accessToken);
+            if (rawSignatures.size() != preparedList.size()) {
+                throw new IllegalStateException("PSC returned "
+                        + rawSignatures.size() + " signatures for " + preparedList.size() + " documents");
             }
 
             X509Certificate signerCertificate = provider.getSignerCertificate(accessToken);
@@ -101,25 +119,61 @@ public final class CloudSigner {
                 throw new IllegalStateException("PSC did not return a signer certificate");
             }
 
-            byte[] cms = CmsEnvelopeAssembler.assembleDetached(CmsAssemblyRequest.builder()
-                    .rawSignature(rawSignature)
-                    .signerCertificate(signerCertificate)
-                    .certificateChain(provider.getCertificateChain(accessToken))
-                    .messageDigest(prepared.getDocumentHash())
-                    .digestAlgorithm(prepared.getDigestAlgorithm())
-                    .signingTime(new Date())
-                    .build());
+            List<X509Certificate> certificateChain = provider.getCertificateChain(accessToken);
+            List<byte[]> signedPdfs = new ArrayList<>(preparedList.size());
+            for (int index = 0; index < preparedList.size(); index++) {
+                PreparedSignature prepared = preparedList.get(index);
+                byte[] rawSignature = rawSignatures.get(index);
+                if (rawSignature == null || rawSignature.length == 0) {
+                    throw new IllegalStateException("PSC returned an empty signature at index " + index);
+                }
 
-            if (options.isTimestamp()) {
-                cms = CmsTimestampEnhancer.enhance(cms, timestampAuthority);
+                byte[] cms = preparedCms
+                        ? rawSignature
+                        : CmsEnvelopeAssembler.assembleDetached(CmsAssemblyRequest.builder()
+                                .rawSignature(rawSignature)
+                                .signerCertificate(signerCertificate)
+                                .certificateChain(certificateChain)
+                                .messageDigest(prepared.getDocumentHash())
+                                .digestAlgorithm(prepared.getDigestAlgorithm())
+                                .signingTime(new Date())
+                                .build());
+
+                if (options.isTimestamp()) {
+                    cms = CmsTimestampEnhancer.enhance(cms, timestampAuthority);
+                }
+
+                signedPdfs.add(injector.inject(prepared, cms));
             }
-
-            return injector.inject(prepared, cms);
+            return signedPdfs;
         } catch (IOException e) {
             throw new IllegalStateException("Failed to prepare or inject PDF signature", e);
         } catch (CMSException | CertificateEncodingException | OperatorCreationException
                  | org.bouncycastle.tsp.TSPException e) {
             throw new IllegalStateException("Failed to assemble CMS envelope", e);
+        }
+    }
+
+    private static void validateBatchInput(List<byte[]> pdfBytesList, SignatureOptions options) {
+        Objects.requireNonNull(pdfBytesList, "pdfBytesList");
+        if (pdfBytesList.isEmpty()) {
+            throw new IllegalArgumentException("pdfBytesList must not be empty");
+        }
+        if (pdfBytesList.size() > BatchSigningLimits.MAX_DOCUMENTS) {
+            throw new IllegalArgumentException(
+                    "pdfBytesList exceeds maximum batch size of " + BatchSigningLimits.MAX_DOCUMENTS);
+        }
+        for (int index = 0; index < pdfBytesList.size(); index++) {
+            byte[] pdfBytes = pdfBytesList.get(index);
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                throw new IllegalArgumentException("pdfBytes at index " + index + " must not be empty");
+            }
+        }
+        if (options == null) {
+            throw new IllegalArgumentException("SignatureOptions must not be null");
+        }
+        if (options.getUserAccessToken() == null || options.getUserAccessToken().isBlank()) {
+            throw new IllegalArgumentException("userAccessToken must not be empty");
         }
     }
 

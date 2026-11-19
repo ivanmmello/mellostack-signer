@@ -6,7 +6,7 @@
 
     <groupId>com.mellostack.signer</groupId>
     <artifactId>mellostack-signer</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>MelloStack Signer</name>
@@ -42,6 +42,7 @@
         <module>mellostack-signer-validator</module>
         <module>mellostack-signer-sdk</module>
         <module>examples</module>
+        <module>mellostack-signer-cli</module>
     </modules>
 
     <properties>

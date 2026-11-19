@@ -38,6 +38,8 @@ public interface PSCProvider {
 | `getProviderId()` | Identificador estável do driver (ex.: `birdid`, `remoteid`, `vidaas`, `safeid`) |
 | `getEnvironment()` | `HOMOLOGATION` ou `PRODUCTION` — endpoints e credenciais corretos |
 | `signHash()` | Envia **apenas o hash** ao PSC com token OAuth2 do usuário; retorna assinatura raw do HSM |
+| `signHashes()` | Envia **vários hashes** em uma requisição CSC/ITI (`hashes[]`) — OTP único quando suportado |
+| `supportsBatchSigning()` | `true` para drivers ITI (Bird ID, Remote ID, VIDaaS, SafeID) |
 | `getSignerCertificate()` | Retorna certificado ICP-Brasil do signatário (credencial CSC ativa) |
 | `getCertificateChain()` | Retorna intermediários V12 (opcional; default vazio) |
 
@@ -81,6 +83,8 @@ public interface PSCProvider {
 | `remoteid` | `RemoteIdProvider` | Certisign / Remote ID | OAuth2 + REST ITI (`/v0/oauth/*`) |
 | `vidaas` | `VidaasProvider` | Valid / VIDaaS | OAuth2 PKCE + REST ITI (hash Base64) |
 | `safeid` | `SafeIdProvider` | Safeweb / SAFEID | OAuth2 + REST |
+| `serproid` | `SerproIdProvider` | Serpro / SerproID | OAuth2 PKCE + REST ITI (hash Base64, RAW, SHA-256) |
+| `bry` | `BryProvider` | Integra Bry (hub) | JWT da aplicação + HUB Signer CMS por hash |
 
 Cada driver expõe um **Builder** para credenciais de parceiro:
 
@@ -115,7 +119,43 @@ PSCProvider safeIdProvider = new SafeIdProviderBuilder()
         .withClientSecret(System.getenv("SAFEID_CLIENT_SECRET"))
         .withEnvironment(Environment.HOMOLOGATION)
         .build();
+
+PSCProvider serproId = new SerproIdProviderBuilder()
+        .withClientId(System.getenv("SERPROID_CLIENT_ID"))
+        .withClientSecret(System.getenv("SERPROID_CLIENT_SECRET"))
+        .withEnvironment(Environment.HOMOLOGATION)
+        .build();
 ```
+
+> **SerproID:** PSC direto, no mesmo molde de Bird ID e SafeID. OAuth2 Authorization Code + PKCE; a troca do `code` é `application/x-www-form-urlencoded`. A assinatura é RAW (PKCS#1) sobre hash SHA-256 em Base64, e o `CloudSigner` monta o PKCS#7. SHA-384 não é aceito. O lote nativo aceita no máximo 5 hashes. Homologação: `https://hom.serproid.serpro.gov.br/oauth`. Produção: `https://serproid.serpro.gov.br/oauth`. Credenciais e certificado de teste saem do [manual SerproID](https://serproid.serpro.gov.br/manual-integracao/suporte/insumos-homologacao/). Homologação real ainda não foi executada.
+
+```java
+BryProvider bry = new BryProviderBuilder()
+        .withClientId(System.getenv("BRY_CLIENT_ID"))
+        .withClientSecret(System.getenv("BRY_CLIENT_SECRET"))
+        .withEnvironment(Environment.HOMOLOGATION)
+        .buildProvider();
+BryAuthorizationLink link = bry.authorization().createLink(BryAuthorizationRequest.builder()
+        .psc(BryPsc.BIRD_ID)
+        .redirectUri(redirectUri)
+        .state(state)
+        .scope(BrySignatureScope.SINGLE_SIGNATURE)
+        .numberOfDocuments(1)
+        .build());
+// Host abre link.authorizationUrl(). No callback só volta state.
+// link.signerToken() entra em SignatureOptions.withUserAccessToken().
+```
+
+> **Integra Bry:** não é um PSC direto. O JWT (`client_credentials`) autentica a aplicação. O token do signatário sai de `POST /psc/link` e o HUB devolve o CMS pronto (`formatoAssinatura=HASH`). O `CloudSigner` injeta esse CMS sem remontar o PKCS#7. Só SHA-256. PSCs do hub: Syn, SafeID, SerproID, RemoteID, BirdID, Vidaas, DS Cloud.
+
+### Estado da Integra Bry
+
+O fluxo combinado está no SDK, na CLI, nos exemplos e no portal demo: JWT da aplicação, `POST /psc/link`, callback só com `state`, CMS por hash SHA-256 e injeção desse CMS no PDF. No demo, o provider é `bry` e o PSC do hub sai de `PSC_BRY_PSC` (padrão `BirdID`).
+
+Os testes automatizados usam respostas simuladas. Homologação e produção seguem em aberto: nenhuma chamada real foi feita a `integra.hom.bry.com.br` nem ao HUB. O primeiro PDF assinado de verdade ainda pode exigir um ajuste pequeno em dois pontos que a documentação da Bry deixa ambíguos:
+
+1. **`kms_data.url`** vai para a base da Integra do ambiente (`https://integra.hom.bry.com.br/api/service` ou `https://integra.bry.com.br/api/service`). Se o HUB recusar, troque com `BryProviderBuilder.withPscServiceUrl(...)`.
+2. **CMS perfil `BASIC`** precisa caber no slot PAdES e passar no verificador do ITI. Se o pacote vier incompleto, o ajuste é no perfil ou na política enviada ao HUB. A fachada `CloudSigner.signPdf` permanece a mesma.
 
 > **Remote ID:** a Certisign não publica URLs fixas como o Bird ID. A `apiBaseUrl` é obrigatória e vem do processo de integração comercial.
 
@@ -130,7 +170,25 @@ O host deve:
 3. Trocar `code` por `access_token`
 4. Passar o token em `SignatureOptions.withUserAccessToken()`
 
-O driver usa o token apenas na chamada `signHash()`.
+O driver usa o token apenas na chamada `signHash()` ou `signHashes()` (lote).
+
+### Assinatura em lote (Release 1.1.0)
+
+```java
+CloudSigner signer = new CloudSigner(birdIdProvider);
+
+List<byte[]> signedPdfs = signer.signPdfBatch(
+        List.of(contratoPdf, anexoPdf, termoPdf),
+        SignatureOptions.builder()
+                .withUserAccessToken(tokenOAuth2Usuario)
+                .withReason("Assinatura em lote")
+                .build());
+```
+
+- O SDK prepara cada PDF localmente (hash ByteRange) e envia **todos os hashes** em **uma** requisição REST ao PSC.
+- Drivers ITI (`birdid`, `remoteid`, `vidaas`, `safeid`) implementam `signHashes()` nativo — **OTP único** para o lote (conforme política do PSC).
+- Limite: `BatchSigningLimits.MAX_DOCUMENTS` (50) por requisição.
+- Homologação opt-in: `PscHomologationIT#birdIdSignsPdfBatchInHomologation` (mesmas variáveis de ambiente do teste single).
 
 ## Tratamento de erros
 

@@ -1,5 +1,7 @@
 package org.icpbrasil.signer.providers.iti;
 
+import org.icpbrasil.signer.model.BatchSigningLimits;
+
 /**
  * Validações comuns para APIs ITI de PSC em nuvem.
  */
@@ -45,6 +47,25 @@ public final class ItiCloudPscValidation {
         if (documentHash.length != 32 && documentHash.length != 48) {
             throw new IllegalArgumentException(
                     "documentHash must be 32 (SHA-256) or 48 (SHA-384) bytes");
+        }
+    }
+
+    /** Limite conservador por requisição CSC/ITI em lote. */
+    public static final int MAX_BATCH_HASH_COUNT = BatchSigningLimits.MAX_DOCUMENTS;
+
+    public static void validateDocumentHashes(java.util.List<byte[]> documentHashes) {
+        if (documentHashes == null) {
+            throw new IllegalArgumentException("documentHashes must not be null");
+        }
+        if (documentHashes.isEmpty()) {
+            throw new IllegalArgumentException("documentHashes must not be empty");
+        }
+        if (documentHashes.size() > MAX_BATCH_HASH_COUNT) {
+            throw new IllegalArgumentException(
+                    "documentHashes exceeds maximum batch size of " + MAX_BATCH_HASH_COUNT);
+        }
+        for (byte[] documentHash : documentHashes) {
+            validateDocumentHash(documentHash);
         }
     }
 }

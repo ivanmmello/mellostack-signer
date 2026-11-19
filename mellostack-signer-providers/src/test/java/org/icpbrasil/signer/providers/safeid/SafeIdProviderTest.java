@@ -126,5 +126,15 @@ class SafeIdProviderTest {
             lastDigestAlgorithm = digestAlgorithm;
             return rawSignature.clone();
         }
+
+        @Override
+        public List<byte[]> signHashes(
+                String accessToken,
+                String certificateAlias,
+                List<byte[]> documentHashes) {
+            return documentHashes.stream()
+                    .map(hash -> signHash(accessToken, certificateAlias, hash, DigestAlgorithm.SHA256))
+                    .toList();
+        }
     }
 }

@@ -3,8 +3,10 @@ package org.icpbrasil.signer.examples;
 import org.icpbrasil.signer.model.Environment;
 import org.icpbrasil.signer.provider.PSCProvider;
 import org.icpbrasil.signer.providers.birdid.BirdIdProviderBuilder;
+import org.icpbrasil.signer.providers.bry.BryProviderBuilder;
 import org.icpbrasil.signer.providers.remoteid.RemoteIdProviderBuilder;
 import org.icpbrasil.signer.providers.safeid.SafeIdProviderBuilder;
+import org.icpbrasil.signer.providers.serproid.SerproIdProviderBuilder;
 import org.icpbrasil.signer.providers.vidaas.VidaasProviderBuilder;
 
 import java.util.Locale;
@@ -18,7 +20,7 @@ public final class PscProviderFactory {
     }
 
     /**
-     * Lê {@code PSC_PROVIDER} (birdid, remoteid, vidaas, safeid) e credenciais comuns.
+     * Lê {@code PSC_PROVIDER} (birdid, remoteid, vidaas, safeid, serproid, bry) e credenciais comuns.
      */
     public static PSCProvider createFromEnvironment() {
         String providerId = ExampleSupport.optionalEnv("PSC_PROVIDER", "birdid").toLowerCase(Locale.ROOT);
@@ -54,9 +56,20 @@ public final class PscProviderFactory {
                     .withEnvironment(environment)
                     .withCertificateAlias(certificateAlias)
                     .build();
+            case "serproid", "serpro-id" -> new SerproIdProviderBuilder()
+                    .withClientId(clientId)
+                    .withClientSecret(clientSecret)
+                    .withEnvironment(environment)
+                    .withCertificateAlias(certificateAlias)
+                    .build();
+            case "bry", "integra-bry" -> new BryProviderBuilder()
+                    .withClientId(clientId)
+                    .withClientSecret(clientSecret)
+                    .withEnvironment(environment)
+                    .build();
             default -> throw new IllegalArgumentException(
                     "PSC_PROVIDER desconhecido: " + providerId
-                            + " (use birdid, remoteid, vidaas ou safeid)");
+                            + " (use birdid, remoteid, vidaas, safeid, serproid ou bry)");
         };
     }
 }
