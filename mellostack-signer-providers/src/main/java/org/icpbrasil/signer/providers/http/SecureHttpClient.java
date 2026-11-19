@@ -40,10 +40,25 @@ public final class SecureHttpClient implements HttpClientFacade {
 
     public String postJson(String url, Map<String, String> headers, String jsonBody) {
         Objects.requireNonNull(jsonBody, "jsonBody");
-        return exchange(buildRequest("POST", url, headers, jsonBody));
+        return exchange(buildRequest("POST", url, headers, jsonBody, "application/json"));
+    }
+
+    @Override
+    public String postForm(String url, Map<String, String> headers, String formBody) {
+        Objects.requireNonNull(formBody, "formBody");
+        return exchange(buildRequest("POST", url, headers, formBody, "application/x-www-form-urlencoded"));
     }
 
     private HttpRequest buildRequest(String method, String url, Map<String, String> headers, String body) {
+        return buildRequest(method, url, headers, body, "application/json");
+    }
+
+    private HttpRequest buildRequest(
+            String method,
+            String url,
+            Map<String, String> headers,
+            String body,
+            String contentType) {
         URI uri = URI.create(url);
         config.validateUrl(uri);
 
@@ -57,7 +72,7 @@ public final class SecureHttpClient implements HttpClientFacade {
         }
 
         if (body != null) {
-            builder.header("Content-Type", "application/json");
+            builder.header("Content-Type", contentType);
             builder.method(method, HttpRequest.BodyPublishers.ofString(body));
         } else {
             builder.GET();

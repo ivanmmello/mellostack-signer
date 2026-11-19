@@ -35,6 +35,9 @@ jobs:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
 
+      - name: Build CLI fat JAR
+        run: mvn -B -pl mellostack-signer-cli -am package -DskipTests
+
       - name: Upload GitHub Release assets
         uses: softprops/action-gh-release@v2
         with:
@@ -43,3 +46,48 @@ jobs:
             mellostack-signer-sdk/target/mellostack-signer-sdk-*.jar
             mellostack-signer-sdk/target/mellostack-signer-sdk-*-sources.jar
             mellostack-signer-sdk/target/mellostack-signer-sdk-*-javadoc.jar
+            mellostack-signer-cli/target/mellostack-signer.jar
+
+  cli-native:
+    name: CLI Native Image (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: mellostack-signer-linux-amd64
+          - os: windows-latest
+            asset_name: mellostack-signer-windows-amd64.exe
+          - os: macos-latest
+            asset_name: mellostack-signer-macos-amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM 17
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: 17
+          distribution: graalvm
+          cache: maven
+
+      - name: Build native CLI
+        run: mvn -B -pl mellostack-signer-cli -am package -DskipTests -Pnative
+
+      - name: Rename binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cp mellostack-signer-cli/target/mellostack-signer "${{ matrix.asset_name }}"
+          chmod +x "${{ matrix.asset_name }}"
+
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Copy-Item mellostack-signer-cli/target/mellostack-signer.exe "${{ matrix.asset_name }}"
+
+      - name: Upload GitHub Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_name }}

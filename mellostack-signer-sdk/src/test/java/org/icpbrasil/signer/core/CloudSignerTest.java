@@ -9,6 +9,7 @@ import org.icpbrasil.signer.provider.PSCProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Signature;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -85,6 +86,19 @@ class CloudSignerTest {
     }
 
     @Test
+    void injectsCmsReturnedByProviderWithoutReassembling() {
+        byte[] preparedCms = new byte[] {0x30, 0x03, 0x01, 0x02, 0x03};
+        var options = SignatureOptions.builder()
+                .withUserAccessToken("token")
+                .build();
+
+        byte[] signedPdf = new CloudSigner(preparedCmsProvider(preparedCms)).signPdf(samplePdf, options);
+
+        String pdf = new String(signedPdf, StandardCharsets.ISO_8859_1);
+        assertTrue(pdf.contains("<3003010203"), "prepared CMS must be injected verbatim");
+    }
+
+    @Test
     void builderCreatesOptions() {
         var options = SignatureOptions.builder()
                 .withReason("Teste")
@@ -94,6 +108,35 @@ class CloudSignerTest {
                 .build();
 
         assertNotNull(options);
+    }
+
+    private PSCProvider preparedCmsProvider(byte[] preparedCms) {
+        return new PSCProvider() {
+            @Override
+            public String getProviderId() {
+                return "prepared-cms";
+            }
+
+            @Override
+            public Environment getEnvironment() {
+                return Environment.HOMOLOGATION;
+            }
+
+            @Override
+            public boolean returnsPreparedCms() {
+                return true;
+            }
+
+            @Override
+            public byte[] signHash(byte[] documentHash, String accessToken) {
+                return preparedCms;
+            }
+
+            @Override
+            public java.security.cert.X509Certificate getSignerCertificate(String accessToken) {
+                return credentials.certificate();
+            }
+        };
     }
 
     private PSCProvider testProvider() {

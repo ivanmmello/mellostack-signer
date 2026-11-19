@@ -51,7 +51,14 @@ public class OAuthController {
         }
 
         if (code == null || code.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing authorization code");
+            if (!oauthFlowService.completesWithoutAuthorizationCode(state)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing authorization code");
+            }
+            try {
+                return redirect(oauthFlowService.completeAuthorization(state, null));
+            } catch (RuntimeException ex) {
+                return redirect(oauthFlowService.failureRedirect(state, ex.getMessage()));
+            }
         }
 
         try {

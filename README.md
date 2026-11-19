@@ -14,9 +14,10 @@ O documento do cliente **nunca** é enviado ao PSC. Apenas o hash SHA-256/384 ge
 | Módulo | Descrição |
 | :--- | :--- |
 | `mellostack-signer-core` | PDF, ByteRange, hash, PKCS#7/CMS e contrato `PSCProvider` |
-| `mellostack-signer-providers` | Adaptadores OAuth2/CSC (Bird ID, Remote ID, VIDaaS, SAFEID) |
+| `mellostack-signer-providers` | Adaptadores OAuth2/CSC (Bird ID, Remote ID, VIDaaS, SAFEID, SerproID, Integra Bry) |
 | `mellostack-signer-validator` | ACT, CRL/OCSP e conformidade DOC-ICP |
 | `mellostack-signer-sdk` | Fachada unificada — artefato para consumo via Maven/Gradle |
+| `mellostack-signer-cli` | CLI terminal + binário GraalVM Native Image (não publicado no Maven Central) |
 
 ## Requisitos
 
@@ -74,6 +75,9 @@ SignatureOptions options = SignatureOptions.builder()
         .build();
 
 byte[] pdfSignedBytes = signer.signPdf(pdfBytesOriginal, options);
+
+// Lote — uma autorização PSC / OTP para N documentos
+List<byte[]> signedBatch = signer.signPdfBatch(List.of(pdf1, pdf2, pdf3), options);
 ```
 
 ## Release
@@ -96,6 +100,20 @@ Programas executáveis em [`examples/pades-signing`](examples/README.md):
 mvn -pl examples/pades-signing -am package -DskipTests
 ```
 
+## CLI (terminal)
+
+Assine PDFs pela linha de comando — JAR fat ou binário nativo GraalVM:
+
+```bash
+mvn -pl mellostack-signer-cli -am package -DskipTests
+
+java -jar mellostack-signer-cli/target/mellostack-signer.jar sign contrato.pdf \
+  -o contrato-assinado.pdf \
+  --token "$PSC_USER_ACCESS_TOKEN"
+```
+
+Documentação completa: [docs/CLI.md](docs/CLI.md).
+
 ## JavaDoc
 
 Gera documentação agregada dos pacotes públicos em `target/site/apidocs/`:
@@ -114,6 +132,7 @@ mellostack-signer/
 ├── mellostack-signer-providers/
 ├── mellostack-signer-validator/
 ├── mellostack-signer-sdk/
+├── mellostack-signer-cli/   # CLI + GraalVM Native Image (não publicado)
 ├── examples/                # Exemplos executáveis (não publicados)
 └── apps/                    # Portal demo homologação (Fase 4.4 — não publicado)
     ├── signer-demo-api/     # Spring Boot :8096
@@ -132,7 +151,7 @@ cd apps/signer-demo-web && npm install && npm run dev
 
 ## Documentação
 
-- [Exemplos de uso](examples/README.md)
+- [CLI (terminal + native image)](docs/CLI.md)
 - [Portal demo homologação](apps/README.md)
 - [Guia de testes](docs/TESTING.md)
 - [Documentação técnica V12](Documentacao_ICP_Brasil_Cloud_Signer_V12.md)

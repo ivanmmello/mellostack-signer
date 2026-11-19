@@ -9,13 +9,18 @@ import org.icpbrasil.signer.providers.oauth.OAuth2PkceGenerator;
 import org.icpbrasil.signer.providers.oauth.OAuth2TokenClient;
 import org.icpbrasil.signer.providers.remoteid.RemoteIdProvider;
 import org.icpbrasil.signer.providers.remoteid.RemoteIdProviderBuilder;
+import org.icpbrasil.signer.providers.bry.BryProvider;
+import org.icpbrasil.signer.providers.bry.BryProviderBuilder;
 import org.icpbrasil.signer.providers.safeid.SafeIdProvider;
 import org.icpbrasil.signer.providers.safeid.SafeIdProviderBuilder;
+import org.icpbrasil.signer.providers.serproid.SerproIdProvider;
+import org.icpbrasil.signer.providers.serproid.SerproIdProviderBuilder;
 import org.icpbrasil.signer.providers.vidaas.VidaasProvider;
 import org.icpbrasil.signer.providers.vidaas.VidaasProviderBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
+import java.util.Objects;
 
 @Component
 public class DemoPscRegistry {
@@ -73,6 +78,23 @@ public class DemoPscRegistry {
                         .build();
                 yield bundle(resolvedProvider, resolvedEnvironment, provider, wrap(provider.oauth2()));
             }
+            case "serproid", "serpro-id" -> {
+                SerproIdProvider provider = (SerproIdProvider) new SerproIdProviderBuilder()
+                        .withClientId(clientId)
+                        .withClientSecret(clientSecret)
+                        .withEnvironment(resolvedEnvironment)
+                        .withCertificateAlias(blankToNull(defaults.certificateAlias()))
+                        .build();
+                yield bundle(resolvedProvider, resolvedEnvironment, provider, wrap(provider.oauth2()));
+            }
+            case "bry", "integra-bry" -> {
+                BryProvider provider = new BryProviderBuilder()
+                        .withClientId(clientId)
+                        .withClientSecret(clientSecret)
+                        .withEnvironment(resolvedEnvironment)
+                        .buildProvider();
+                yield bundle(resolvedProvider, resolvedEnvironment, provider, wrap(provider));
+            }
             default -> throw new IllegalArgumentException("Unsupported PSC provider: " + resolvedProvider);
         };
     }
@@ -91,7 +113,8 @@ public class DemoPscRegistry {
                 oauth::buildAuthorizationUrl,
                 oauth::tokenClient,
                 oauth::clientId,
-                oauth::clientSecret);
+                oauth::clientSecret,
+                false);
     }
 
     private static DemoOAuthSupport wrap(org.icpbrasil.signer.providers.remoteid.RemoteIdOAuth2Support oauth) {
@@ -100,7 +123,8 @@ public class DemoPscRegistry {
                 oauth::buildAuthorizationUrl,
                 oauth::tokenClient,
                 oauth::clientId,
-                oauth::clientSecret);
+                oauth::clientSecret,
+                false);
     }
 
     private static DemoOAuthSupport wrap(org.icpbrasil.signer.providers.vidaas.VidaasOAuth2Support oauth) {
@@ -109,7 +133,8 @@ public class DemoPscRegistry {
                 (pkce, redirectUri, state) -> oauth.buildAuthorizationUrl(pkce, redirectUri, state),
                 oauth::tokenClient,
                 oauth::clientId,
-                oauth::clientSecret);
+                oauth::clientSecret,
+                false);
     }
 
     private static DemoOAuthSupport wrap(org.icpbrasil.signer.providers.safeid.SafeIdOAuth2Support oauth) {
@@ -118,7 +143,33 @@ public class DemoPscRegistry {
                 oauth::buildAuthorizationUrl,
                 oauth::tokenClient,
                 oauth::clientId,
-                oauth::clientSecret);
+                oauth::clientSecret,
+                false);
+    }
+
+    private static DemoOAuthSupport wrap(org.icpbrasil.signer.providers.serproid.SerproIdOAuth2Support oauth) {
+        return new DemoOAuthSupport(
+                oauth::generatePkceChallenge,
+                oauth::buildAuthorizationUrl,
+                oauth::tokenClient,
+                oauth::clientId,
+                oauth::clientSecret,
+                false);
+    }
+
+    private static DemoOAuthSupport wrap(BryProvider provider) {
+        Objects.requireNonNull(provider, "provider");
+        return new DemoOAuthSupport(
+                () -> new OAuth2PkceGenerator.PkceChallenge("bry", "bry"),
+                (pkce, redirectUri, state) -> {
+                    throw new IllegalStateException("Integra Bry authorization is started by OAuthFlowService");
+                },
+                () -> {
+                    throw new IllegalStateException("Integra Bry does not exchange an authorization code");
+                },
+                () -> "",
+                () -> "",
+                true);
     }
 
     private static Environment parseEnvironment(String raw) {
@@ -157,7 +208,8 @@ public class DemoPscRegistry {
             AuthorizationUrlBuilder authorizationUrlBuilder,
             TokenClientFactory tokenClientFactory,
             ClientIdSupplier clientIdSupplier,
-            ClientSecretSupplier clientSecretSupplier) {
+            ClientSecretSupplier clientSecretSupplier,
+            boolean completesWithoutAuthorizationCode) {
 
         public OAuth2PkceGenerator.PkceChallenge generatePkceChallenge() {
             return pkceFactory.create();

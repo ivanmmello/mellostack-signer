@@ -41,6 +41,7 @@ public class DemoProperties {
         private String clientSecret = "";
         private String apiBaseUrl = "";
         private String certificateAlias = "";
+        private String bryPsc = "BirdID";
 
         public String provider() {
             return provider;
@@ -88,6 +89,14 @@ public class DemoProperties {
 
         public void setCertificateAlias(String certificateAlias) {
             this.certificateAlias = certificateAlias;
+        }
+
+        public String bryPsc() {
+            return bryPsc;
+        }
+
+        public void setBryPsc(String bryPsc) {
+            this.bryPsc = bryPsc;
         }
     }
 

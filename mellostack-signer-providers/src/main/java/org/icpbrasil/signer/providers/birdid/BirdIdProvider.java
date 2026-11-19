@@ -63,6 +63,18 @@ public final class BirdIdProvider implements PSCProvider {
     }
 
     @Override
+    public List<byte[]> signHashes(List<byte[]> documentHashes, String accessToken) {
+        BirdIdApiClient.validateAccessToken(accessToken);
+        String alias = resolveCertificateAlias(accessToken);
+        return apiClient.signHashes(accessToken, alias, documentHashes);
+    }
+
+    @Override
+    public boolean supportsBatchSigning() {
+        return true;
+    }
+
+    @Override
     public X509Certificate getSignerCertificate(String accessToken) {
         return resolveCertificate(accessToken).certificate();
     }

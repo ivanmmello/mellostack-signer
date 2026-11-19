@@ -139,7 +139,28 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 - [x] Implementar envio de hash para assinatura via API REST CSC — `SafeIdApiClient.signHash()` (formato RAW, hash hex)
 - [ ] Validar em ambiente de homologação Safeweb
 
-### 2.6 Tabela de Compatibilidade PSC
+### 2.6 Integra Bry
+
+- [x] Implementar `BryProviderBuilder` (Client ID, Client Secret, Environment)
+- [x] Implementar JWT da aplicação e link de autenticação — `BryAuthorizationClient` (`POST /psc/link`)
+- [x] Implementar assinatura CMS por hash via HUB Signer — `BryApiClient` (`formatoAssinatura=HASH`, `kms_type=PSC`)
+- [x] `CloudSigner` injeta CMS pronto quando `PSCProvider.returnsPreparedCms()`
+- [x] SDK, CLI, exemplos e portal demo (`bry`, `PSC_BRY_PSC`, padrão `BirdID`)
+- [ ] Validar em ambiente de homologação Bry — testes atuais são com resposta simulada; nenhuma chamada real ao HUB
+
+> Homologação pode exigir ajuste pequeno, sem mudar `CloudSigner.signPdf`: (1) `kms_data.url` hoje é a base da Integra — trocar com `withPscServiceUrl` se o HUB recusar; (2) o CMS perfil `BASIC` precisa caber no slot PAdES e passar no verificador do ITI.
+
+### 2.7 SerproID
+
+- [x] Implementar `SerproIdProviderBuilder` (Client ID, Client Secret, Environment)
+- [x] Implementar OAuth2 Authorization Code + PKCE — troca do `code` em `application/x-www-form-urlencoded`
+- [x] Implementar assinatura RAW via REST — hash SHA-256 em Base64; PKCS#7 montado pelo `CloudSigner`
+- [x] SDK, CLI, exemplos e portal demo (`serproid`)
+- [ ] Validar em ambiente de homologação SerproID — testes atuais são com resposta simulada
+
+> SHA-384 não é aceito. Lote nativo: no máximo 5 hashes. Credenciais e certificado de teste: [manual SerproID](https://serproid.serpro.gov.br/manual-integracao/suporte/insumos-homologacao/). Homologação `https://hom.serproid.serpro.gov.br/oauth`.
+
+### 2.8 Tabela de Compatibilidade PSC
 
 | Prestador (PSC) | Nome Comercial | Protocolo API | Driver | Homologação | Produção |
 | :--- | :--- | :--- | :--- | :---: | :---: |
@@ -147,6 +168,8 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | **Certisign** | Remote ID | OAuth2 / REST Custom | `RemoteIdProvider` | [~] | [ ] |
 | **Valid** | VIDaaS | OpenID Connect / REST | `VidaasProvider` | [~] | [ ] |
 | **Safeweb** | SAFEID | OAuth2 / REST | `SafeIdProvider` | [~] | [ ] |
+| **Serpro** | SerproID | OAuth2 PKCE / REST | `SerproIdProvider` | [ ] | [ ] |
+| **Bry** | Integra Bry | JWT + HUB Signer | `BryProvider` | [ ] | [ ] |
 
 ---
 
@@ -248,17 +271,19 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 
 ### 5.1 Release 1.1.0 — Assinatura em Lote (Batch Signing)
 
-- [ ] Implementar envio de múltiplos hashes em uma única requisição autorizada
-- [ ] Suportar OTP único para lote de documentos
-- [ ] API `signPdfBatch(List<byte[]>, SignatureOptions)`
+- [x] Implementar envio de múltiplos hashes em uma única requisição autorizada
+- [x] Suportar OTP único para lote de documentos
+- [x] API `signPdfBatch(List<byte[]>, SignatureOptions)`
 - [ ] Testes de integração com batch em homologação
+
+> **Código local (não commitado):** drivers ITI enviam `hashes[]` em um POST; homologação E2E aguarda `PSC_ACCESS_TOKEN`. Release `v1.1.0` + Maven Central após teste OK no Verificador ITI.
 
 ### 5.2 Release 1.2.0 — CLI GraalVM Native Image
 
-- [ ] Criar módulo CLI (`icpbrasil-cloud-signer-cli`)
-- [ ] Comando: assinar PDF via linha de terminal
-- [ ] Compilar com GraalVM Native Image (binário standalone)
-- [ ] Distribuir releases CLI no GitHub Releases
+- [x] Criar módulo CLI (`mellostack-signer-cli`)
+- [x] Comando: assinar PDF via linha de terminal (`sign`, `sign-batch`)
+- [x] Compilar com GraalVM Native Image (perfil `-Pnative`, binário standalone)
+- [x] Distribuir releases CLI no GitHub Releases (JAR fat + binários nativos por OS)
 
 ### 5.3 Release 1.3.0 — XAdES para NF-e
 
@@ -345,7 +370,8 @@ Documento de acompanhamento de progresso do **ICP-Brasil Cloud Signer SDK** — 
 | 2026-07-31 | Fase 4.1 concluída: Mockito, golden files PAdES, JaCoCo 60%, docs/TESTING.md |
 | 2026-07-31 | Fase 4.2 concluída: módulo `examples/pades-signing`, README Gradle, perfil `-Pdocs` JavaDoc agregado |
 | 2026-07-31 | Fase 4.3 concluída: release `1.0.0`, tag `v1.0.0`, publicação Maven Central via CI |
-| 2026-07-31 | Fase 4.4 implementada: portal demo `apps/signer-demo-api` + `apps/signer-demo-web`, docs e docker-compose |
+| 2026-08-07 | Fase 5.1 concluída: batch signing `signPdfBatch`, `PSCProvider.signHashes`, release 1.1.0-SNAPSHOT |
+| 2026-08-07 | Fase 5.2 concluída: CLI `mellostack-signer-cli` (sign/sign-batch), JAR fat, perfil `-Pnative`, release workflow |
 
 ---
 

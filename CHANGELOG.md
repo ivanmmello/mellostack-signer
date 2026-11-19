@@ -9,11 +9,25 @@ e este projeto adere ao [Versionamento Semântico](docs/VERSIONING.md).
 
 ### Added
 
-- N/A
+- **CLI GraalVM (Fase 5.2):** módulo `mellostack-signer-cli` com subcomandos `sign` e `sign-batch`
+- JAR fat (`mellostack-signer.jar`) e perfil Maven `-Pnative` (GraalVM Native Image)
+- GitHub Release: binários nativos Linux/Windows/macOS + JAR da CLI
+- Documentação: [docs/CLI.md](docs/CLI.md)
+- **Integra Bry:** driver `BryProvider` (HUB Signer CMS por hash SHA-256). `PSCProvider.returnsPreparedCms()` faz o `CloudSigner` injetar o CMS pronto
+- **SerproID:** driver `SerproIdProvider` (OAuth2 PKCE, assinatura RAW SHA-256 em Base64, lote de até 5 hashes)
 
 ### Changed
 
 - N/A
+
+## [1.1.0-SNAPSHOT] — 2026-08-07
+
+### Added
+
+- **Batch signing (Fase 5.1):** `CloudSigner.signPdfBatch()` — múltiplos PDFs com uma requisição PSC
+- `PSCProvider.signHashes()` e `supportsBatchSigning()` — drivers ITI enviam `hashes[]` em lote (OTP único)
+- `BatchSigningLimits.MAX_DOCUMENTS` (50) — limite por requisição
+- Testes: `CloudSignerBatchTest`, `ItiCloudPscApiClientTest` (batch), `PscHomologationIT` (batch opt-in)
 
 ## [1.0.0] — 2026-07-31
 

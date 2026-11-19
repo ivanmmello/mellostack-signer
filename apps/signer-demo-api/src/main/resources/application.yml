@@ -17,6 +17,7 @@ demo:
     client-secret: ${PSC_CLIENT_SECRET:}
     api-base-url: ${PSC_API_BASE_URL:}
     certificate-alias: ${PSC_CERTIFICATE_ALIAS:}
+    bry-psc: ${PSC_BRY_PSC:BirdID}
   act:
     tsa-url: ${ACT_TSA_URL:}
 

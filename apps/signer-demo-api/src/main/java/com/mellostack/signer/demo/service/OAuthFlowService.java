@@ -4,6 +4,10 @@ import com.mellostack.signer.demo.config.DemoProperties;
 import com.mellostack.signer.demo.psc.DemoPscRegistry;
 import com.mellostack.signer.demo.session.SigningSession;
 import com.mellostack.signer.demo.session.SigningSessionStatus;
+import org.icpbrasil.signer.providers.bry.BryAuthorizationRequest;
+import org.icpbrasil.signer.providers.bry.BryProvider;
+import org.icpbrasil.signer.providers.bry.BryPsc;
+import org.icpbrasil.signer.providers.bry.BrySignatureScope;
 import org.icpbrasil.signer.providers.oauth.OAuth2TokenClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -29,6 +33,20 @@ public class OAuthFlowService {
     public URI startAuthorization(String sessionId) {
         SigningSession session = sessionService.require(sessionId);
         DemoPscRegistry.DemoPscBundle bundle = pscRegistry.bundleForSession(session.providerId(), session.environment());
+        if (bundle.oauth().completesWithoutAuthorizationCode()) {
+            BryProvider bry = (BryProvider) bundle.provider();
+            var link = bry.authorization().createLink(BryAuthorizationRequest.builder()
+                    .psc(BryPsc.fromApiName(properties.psc().bryPsc()))
+                    .redirectUri(properties.oauthRedirectUri())
+                    .state(session.id())
+                    .scope(BrySignatureScope.SINGLE_SIGNATURE)
+                    .numberOfDocuments(1)
+                    .build());
+            session.setAccessToken(link.signerToken());
+            session.setCodeVerifier("bry-link");
+            return URI.create(link.authorizationUrl());
+        }
+
         var pkce = bundle.oauth().generatePkceChallenge();
         session.setCodeVerifier(pkce.codeVerifier());
 
@@ -40,13 +58,28 @@ public class OAuthFlowService {
         return URI.create(authorizationUrl);
     }
 
+    public boolean completesWithoutAuthorizationCode(String sessionId) {
+        SigningSession session = sessionService.require(sessionId);
+        return pscRegistry.bundleForSession(session.providerId(), session.environment())
+                .oauth()
+                .completesWithoutAuthorizationCode();
+    }
+
     public URI completeAuthorization(String sessionId, String authorizationCode) {
         SigningSession session = sessionService.require(sessionId);
+        DemoPscRegistry.DemoPscBundle bundle = pscRegistry.bundleForSession(session.providerId(), session.environment());
+        if (bundle.oauth().completesWithoutAuthorizationCode()) {
+            if (session.accessToken() == null || session.accessToken().isBlank()) {
+                throw new IllegalStateException("Missing Integra Bry signer credential for session " + sessionId);
+            }
+            session.setStatus(SigningSessionStatus.AUTHORIZED);
+            return successRedirect(session);
+        }
+
         if (session.codeVerifier() == null || session.codeVerifier().isBlank()) {
             throw new IllegalStateException("Missing PKCE verifier for session " + sessionId);
         }
 
-        DemoPscRegistry.DemoPscBundle bundle = pscRegistry.bundleForSession(session.providerId(), session.environment());
         OAuth2TokenClient tokenClient = bundle.oauth().tokenClient();
         var token = tokenClient.exchangeAuthorizationCode(new OAuth2TokenClient.AuthorizationCodeRequest(
                 bundle.oauth().clientId(),
@@ -58,7 +91,10 @@ public class OAuthFlowService {
 
         session.setAccessToken(token.accessToken());
         session.setStatus(SigningSessionStatus.AUTHORIZED);
+        return successRedirect(session);
+    }
 
+    private URI successRedirect(SigningSession session) {
         return UriComponentsBuilder.fromUriString(properties.frontendUrl())
                 .path("/")
                 .queryParam("sessionId", session.id())

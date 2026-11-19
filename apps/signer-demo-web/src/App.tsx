@@ -21,6 +21,8 @@ const PROVIDERS = [
   { id: "remoteid", label: "Remote ID" },
   { id: "vidaas", label: "VIDaaS" },
   { id: "safeid", label: "SAFEID" },
+  { id: "serproid", label: "SerproID" },
+  { id: "bry", label: "Integra Bry" },
 ];
 
 function loadHistory(): HistoryEntry[] {
@@ -229,7 +231,9 @@ export default function App() {
               <input type="checkbox" checked={timestamp} onChange={(e) => setTimestamp(e.target.checked)} />
               Carimbo do tempo (PAdES-T / ACT)
             </label>
-            <p className="hint">OTP Bird ID ocorre no login OAuth do PSC (navegador).</p>
+            <p className="hint">
+              OTP do PSC ocorre no login do navegador. Na Integra Bry o retorno traz só o state da sessão.
+            </p>
             <button
               className="primary"
               disabled={busy}
