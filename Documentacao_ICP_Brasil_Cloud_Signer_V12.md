@@ -19,7 +19,7 @@ Com a migração progressiva da infraestrutura de chaves públicas brasileira do
 > 📌 **DIRETRIZES FUNDAMENTAIS DE DESIGN**
 > * **Privacidade Total dos Dados:** O documento do cliente NUNCA é enviado para o PSC. Apenas o hash SHA-256 / SHA-384 gerado localmente pelo JAR é transmitido para assinatura [cite: 2].
 > * **Zero Boilerplate:** O desenvolvedor precisa de menos de 10 linhas de código para autenticar o usuário, enviar o hash para o PSC e obter o documento assinado [cite: 2].
-> * **Multi-PSC Plugável:** Arquitetura baseada em drivers que permite alternar entre Soluti (BirdID), Certisign (RemoteID), Valid (VIDaaS) e Safeweb (SAFEID) sem alterar a regra de negócio do sistema [cite: 2].
+> * **Multi-PSC Plugável:** Arquitetura baseada em drivers que permite alternar entre Soluti (Bird ID), Certisign (Remote ID), Valid (VIDaaS), Safeweb (SAFEID), Serpro (SerproID) e o hub Integra Bry sem alterar a regra de negócio do sistema [cite: 2].
 > * **Dual-mode (roadmap):** Nuvem via PSC (sem install) + **Signer Agent** genérico para token/cartão A1/A3 — compatível com SafeNet e dxSafe simultâneos (ver [`docs/LOCAL_AGENT.md`](docs/LOCAL_AGENT.md)).
 
 ---
@@ -159,6 +159,10 @@ A biblioteca possui suporte nativo e padronizado aos principais Prestadores de S
 | **Certisign** | Remote ID | OAuth2 / REST Custom | Sim / Nativo |
 | **Valid** | VIDaaS | OpenID Connect / REST | Sim / Nativo |
 | **Safeweb** | SAFEID | OAuth2 / REST | Sim / Nativo |
+| **Serpro** | SerproID | OAuth2 PKCE / REST | Sim / Nativo (SHA-256) |
+| **Bry** | Integra Bry | JWT + HUB Signer | Sim / Nativo (SHA-256, CMS pronto) |
+
+SerproID e Integra Bry aceitam apenas hash SHA-256 nesse fluxo. A homologação ao vivo dos dois ainda está aberta: o driver está no SDK, com testes de resposta simulada. No caso da Bry, o HUB devolve o CMS pronto e o `CloudSigner` injeta esse pacote; nos demais, o PKCS#7 continua sendo montado localmente.
 
 ---
 
@@ -211,7 +215,7 @@ Quando um usuário clica em **"Assinar documento"** no sistema de produção, a 
 
 ### 7.3 Fluxo Simulado (Experiência do Usuário Final)
 
-1. **Seleção do PSC** — Usuário escolhe o prestador (Bird ID, Remote ID, VIDaaS ou SAFEID) e o ambiente (Homologação / Produção).
+1. **Seleção do PSC** — Usuário escolhe o prestador (Bird ID, Remote ID, VIDaaS, SAFEID, SerproID ou Integra Bry) e o ambiente (Homologação / Produção).
 2. **Upload do documento** — Arrastar ou selecionar um PDF a ser assinado (permanece no servidor demo; apenas o hash segue ao PSC).
 3. **Autenticação OAuth2** — Redirect para o PSC; usuário autoriza com app/credenciais do certificado em nuvem.
 4. **Confirmação OTP** — Quando exigido pelo PSC, informar código do aplicativo móvel.
